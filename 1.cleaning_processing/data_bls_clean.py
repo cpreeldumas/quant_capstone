@@ -8,7 +8,7 @@ import pandas as pd
 #import requests
 
 #------------------------------------------------------
-# Note: BLS responds with error if above code is used. The files were instead downloaded manually via browser as .txt files from https://download.bls.gov/pub/time.series/la.
+# Note: BLS responds with error if below code is used. The files were instead downloaded manually via browser as .txt files from https://download.bls.gov/pub/time.series/la.
 
 # Download and save .TXT files from BLS website into current directory
 
@@ -145,3 +145,4 @@ df_unemp_county = df_unemp_county.sort_values(by=['area_code', 'year', 'month'],
 # Save to CSV
 df_unemp_county[['FIPS', 'state', 'countyname', 'year', 'month',
        'Employment', 'Labor_Force', 'Unemployment', 'Unemployment_Rate']].to_csv('BLS_county_employment.csv', index=False)
+
