@@ -1,0 +1,12 @@
+---
+title: "BLS Data Cleaning"
+output: html_notebook
+---
+
+library(readr)
+
+urlfile="https://github.com/cpreeldumas/quant_capstone/blob/f13ffebcc14953a7190e7765477d134f560435a4/data_raw/BLS_county_employment.csv"
+
+bls_county_employment <- read_csv(url(urlfile))
+
+pipspec(bls_data)
