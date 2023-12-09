@@ -1,12 +1,63 @@
 ---
-title: "BLS Data Cleaning"
+title: "Capstone Data Cleaning"
 output: html_notebook
 ---
 
 library(readr)
+library(dplyr)
+library(lubridate)
+library(tidyverse)
 
-urlfile="https://github.com/cpreeldumas/quant_capstone/blob/f13ffebcc14953a7190e7765477d134f560435a4/data_raw/BLS_county_employment.csv"
 
-bls_county_employment <- read_csv(url(urlfile))
+# Load county-level unemployment data
 
-pipspec(bls_data)
+BLS_county_employment <- read_csv("Documents/Coding Projects/quant_capstone/data_raw/BLS_county_employment.csv")
+
+
+# Remove observations before 2015
+
+BLS_county_employment <- BLS_county_employment %>% filter(year > "2014")
+
+
+# Merge in DC data
+
+BLS_county_employment_DC <- read_csv("Documents/Coding Projects/quant_capstone/data_raw/BLS_county_employment_DC.csv")
+
+BLS_county_employment_v2 <- rbind(BLS_county_employment,BLS_county_employment_DC)
+
+
+# Merge in moratoria dates
+
+moratoria_dates <- read_csv("Documents/Coding Projects/quant_capstone/data_raw/moratoria_dates.csv")
+
+BLS_county_employment_v3 <- merge(BLS_county_employment_v2,moratoria_dates,by=("state"))
+
+view(BLS_county_employment_v3)
+
+# convert control and treatment variable to binary
+
+BLS_county_employment_v3$control <- factor(BLS_county_employment_v3$control,
+                            levels = 0:1)
+                            
+BLS_county_employment_v3$treatment <- factor(BLS_county_employment_v3$treatment,
+                            levels = 0:1)
+                            
+table(BLS_county_employment_v3$control)
+
+# Plot Unemployment Rate
+
+BLS_county_employment_v3 %>% 
+  mutate(date = as.Date(paste(year, month, "01", sep = "-"))) %>%
+  ggplot(aes(x=date, y=Unemployment_Rate, colour=control, group=control)) +        geom_smooth(aes(group = control), method = "auto", size = 2, se = FALSE) +
+  geom_vline(xintercept = as.numeric(as.Date("2021-08-26")), linetype=4)
+
+
+# Descriptive Statistics
+
+str(BLS_county_employment_v3)
+
+
+# Export CV
+
+write.csv(BLS_county_employment_v3, "Documents/Coding Projects/quant_capstone/data_raw/BLS_county_employment_v3.csv", row.names=FALSE)
+
