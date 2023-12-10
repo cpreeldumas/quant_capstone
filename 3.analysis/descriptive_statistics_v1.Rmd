@@ -1,0 +1,135 @@
+---
+title: "Descriptive Statistics"
+author: "Denise Upton"
+date: "2023-12-10"
+output: html_document
+---
+
+library(readr)
+library(dplyr)
+library(lubridate)
+library(tidyverse)
+library(psych)
+
+
+BLS_county_employment_v4 <- read_csv("Documents/Coding Projects/quant_capstone/data_clean/BLS_county_employment_clean.csv")
+
+
+# Descriptive Statistics
+
+str(BLS_county_employment_v4)
+
+
+## Number of states
+
+with(BLS_county_employment_v4, length(unique(state)))
+
+with(BLS_county_employment_v4, length(unique(state[treatment == '1'])))
+
+with(BLS_county_employment_v4, length(unique(state[treatment == '0'])))
+
+## Number of counties
+
+### total
+with(BLS_county_employment_v4, length(unique(FIPS)))
+
+### treatment
+with(BLS_county_employment_v4, length(unique(FIPS[treatment == '1'])))
+
+### control
+with(BLS_county_employment_v4, length(unique(FIPS[treatment == '0'])))
+
+
+with(BLS_county_employment_v4, length(unique(FIPS[treatment == '0' | treatment =='1'])))
+
+
+## Number of observations (March 2021 to Oct 2023)
+
+with(BLS_county_employment_v4, length(Unemployment_Rate[date > '2021-03-01']))
+
+### control
+with(BLS_county_employment_v4, length(Unemployment_Rate[date > '2021-03-01' & treatment == '0']))
+
+### treatment
+with(BLS_county_employment_v4, length(Unemployment_Rate[date > '2021-03-01' & treatment == '1']))
+
+
+## Size of labor force
+
+### total 2020
+with(BLS_county_employment_v3, sum(Labor_Force[year == "2020" & month=="1"]))
+
+### treatment 2020
+with(BLS_county_employment_v3, sum(Labor_Force[treatment == '1' & year == "2020" & month=="1"]))
+
+### control 2020
+with(BLS_county_employment_v3, sum(Labor_Force[treatment == '0' & year == "2020" & month=="1"]))
+
+### total 2021
+with(BLS_county_employment_v3, sum(Labor_Force[year == "2021" & month=="1"]))
+
+### treatment 2021
+with(BLS_county_employment_v3, sum(Labor_Force[treatment == '1' & year == "2021" & month=="1"]))
+
+### control 2021
+with(BLS_county_employment_v3, sum(Labor_Force[treatment == '0' & year == "2021" & month=="1"]))
+
+### total 2022
+with(BLS_county_employment_v3, sum(Labor_Force[year == "2022" & month=="1"]))
+
+### treatment 2022
+with(BLS_county_employment_v3, sum(Labor_Force[treatment == '1' & year == "2022" & month=="1"]))
+
+### control 2022
+with(BLS_county_employment_v3, sum(Labor_Force[treatment == '0' & year == "2022" & month=="1"]))
+
+### total 2023
+with(BLS_county_employment_v3, sum(Labor_Force[year == "2023" & month=="1"]))
+
+### treatment 2023
+with(BLS_county_employment_v3, sum(Labor_Force[treatment == '1' & year == "2023" & month=="1"]))
+
+### control 2023
+with(BLS_county_employment_v3, sum(Labor_Force[treatment == '0' & year == "2023" & month=="1"]))
+
+## Avg Unemployment Rate
+
+### all Jan 2020
+with(BLS_county_employment_v3, describe(Unemployment_Rate[year == "2020" & month=="1"]))
+
+### control Jan 2020
+with(BLS_county_employment_v3, describe(Unemployment_Rate[treatment == '0' & year == "2020" & month=="1"]))
+
+### treatment Jan 2020
+with(BLS_county_employment_v3, describe(Unemployment_Rate[treatment == '1' & year == "2020" & month=="1"]))
+
+
+### all Jan 2021
+with(BLS_county_employment_v3, describe(Unemployment_Rate[year == "2021" & month=="1"]))
+
+### control Jan 2021
+with(BLS_county_employment_v3, describe(Unemployment_Rate[treatment == '0' & year == "2021" & month=="1"]))
+
+### treatment Jan 2021
+with(BLS_county_employment_v3, describe(Unemployment_Rate[treatment == '1' & year == "2021" & month=="1"]))
+
+
+### all Jan 2022
+with(BLS_county_employment_v3, describe(Unemployment_Rate[year == "2022" & month=="1"]))
+
+### control Jan 2022
+with(BLS_county_employment_v3, describe(Unemployment_Rate[treatment == '0' & year == "2022" & month=="1"]))
+
+### treatment Jan 2022
+with(BLS_county_employment_v3, describe(Unemployment_Rate[treatment == '1' & year == "2022" & month=="1"]))
+
+
+### all Jan 2023
+with(BLS_county_employment_v3, describe(Unemployment_Rate[year == "2023" & month=="1"]))
+
+### control Jan 2023
+with(BLS_county_employment_v3, describe(Unemployment_Rate[treatment == '0' & year == "2023" & month=="1"]))
+
+### treatment Jan 2023
+with(BLS_county_employment_v3, describe(Unemployment_Rate[treatment == '1' & year == "2023" & month=="1"]))
+
