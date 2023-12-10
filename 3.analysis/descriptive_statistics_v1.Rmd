@@ -13,6 +13,37 @@ library(psych)
 
 
 BLS_county_employment_clean <- read_csv("Documents/Coding Projects/quant_capstone/data_clean/BLS_county_employment_clean.csv")
+str(BLS_county_employment_clean)
+
+BLS_county_employment_clean$control <- factor(BLS_county_employment_clean$control,
+                            levels = 0:1)
+                            
+BLS_county_employment_clean$treatment <- factor(BLS_county_employment_clean$treatment,
+                            levels = 0:1)
+
+# Plot Unemployment Rate 
+
+BLS_county_employment_clean %>% 
+  filter(year >= "2019") %>%
+  ggplot(aes(x=date, y=Unemployment_Rate, color=treatment, group=treatment)) +
+  geom_smooth(aes(group = treatment), size = 1, se = FALSE) +
+  geom_vline(xintercept = as.numeric(as.Date("2021-08-26")), linetype=4) +                     scale_color_manual(values=c("#4bcbab", "#d83f54"))
+
+
+BLS_county_employment_clean %>% 
+  filter(year >= "2019") %>%
+  ggplot(aes(x=date, y=Unemployment_Rate, colour=treatment, group=state)) +        geom_smooth(aes(group = state), method = "auto", size = 0.5, se = FALSE, alpha = 0.5) +
+  geom_vline(xintercept = as.numeric(as.Date("2021-08-26")), linetype=4) +         scale_color_manual(values=c("#4bcbab", "#d83f54"))
+  
+BLS_county_employment_clean %>% 
+  filter(year >= "2020") %>%
+  ggplot(aes(x=date, y=Unemployment_Rate, colour=treatment, group=state)) +        geom_smooth(aes(group = state), method = "auto", size = 0.5, se = FALSE, alpha = 0.5) +
+    geom_smooth(aes(group = treatment), size = 2, se = FALSE) +
+  geom_vline(xintercept = as.numeric(as.Date("2021-08-26")), linetype=4) +         scale_color_manual(values=c("#4bcbab", "#d83f54"))
+  
+with(BLS_county_employment_clean,
+  max(Unemployment_Rate[date<'2020-12-01']))
+
 
 
 # Descriptive Statistics
