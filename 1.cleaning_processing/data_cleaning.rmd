@@ -7,7 +7,7 @@ library(readr)
 library(dplyr)
 library(lubridate)
 library(tidyverse)
-
+library(psych)
 
 # Load county-level unemployment data
 
@@ -44,20 +44,16 @@ BLS_county_employment_v3$treatment <- factor(BLS_county_employment_v3$treatment,
                             
 table(BLS_county_employment_v3$control)
 
+BLS_county_employment_v4 <- BLS_county_employment_v3 %>% 
+  mutate(date = as.Date(paste(year, month, "01", sep = "-")))
+
 # Plot Unemployment Rate
 
-BLS_county_employment_v3 %>% 
-  mutate(date = as.Date(paste(year, month, "01", sep = "-"))) %>%
-  ggplot(aes(x=date, y=Unemployment_Rate, colour=control, group=control)) +        geom_smooth(aes(group = control), method = "auto", size = 2, se = FALSE) +
-  geom_vline(xintercept = as.numeric(as.Date("2021-08-26")), linetype=4)
-
-
-# Descriptive Statistics
-
-str(BLS_county_employment_v3)
-
+BLS_county_employment_v4 %>% 
+  filter(year >= "2019") %>%
+  ggplot(aes(x=date, y=Unemployment_Rate, colour=treatment, group=treatment)) +        geom_smooth(aes(group = control), method = "auto", size = 2, se = FALSE) +
+  geom_vline(xintercept = as.numeric(as.Date("2021-08-26")), linetype=4) +         scale_color_manual(values=c("#4bcbab", "#d83f54"))
 
 # Export CV
 
-write.csv(BLS_county_employment_v3, "Documents/Coding Projects/quant_capstone/data_raw/BLS_county_employment_v3.csv", row.names=FALSE)
-
+write.csv(BLS_county_employment_v4, "Documents/Coding Projects/quant_capstone/data_clean/BLS_county_employment_clean.csv", row.names=FALSE)
