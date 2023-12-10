@@ -1752,8 +1752,8 @@ display: none;
 
 
 <!-- rnb-text-begin -->
-<p>library(readr) library(dplyr) library(lubridate)
-library(tidyverse)</p>
+<p>library(readr) library(dplyr) library(lubridate) library(tidyverse)
+library(psych)</p>
 <div id="load-county-level-unemployment-data" class="section level1">
 <h1>Load county-level unemployment data</h1>
 <p>BLS_county_employment &lt;- read_csv(“Documents/Coding
@@ -1786,28 +1786,199 @@ factor(BLS_county_employment_v3\)</span>control, levels = 0:1)</p>
 <p>BLS_county_employment_v3<span class="math inline">\(treatment &lt;-
 factor(BLS_county_employment_v3\)</span>treatment, levels = 0:1)</p>
 <p>table(BLS_county_employment_v3$control)</p>
+<p>BLS_county_employment_v4 &lt;- BLS_county_employment_v3 %&gt;%
+mutate(date = as.Date(paste(year, month, “01”, sep = “-”)))</p>
 </div>
 <div id="plot-unemployment-rate" class="section level1">
 <h1>Plot Unemployment Rate</h1>
-<p>BLS_county_employment_v3 %&gt;% mutate(date = as.Date(paste(year,
-month, “01”, sep = “-”))) %&gt;% ggplot(aes(x=date, y=Unemployment_Rate,
-colour=control, group=control)) + geom_smooth(aes(group = control),
-method = “auto”, size = 2, se = FALSE) + geom_vline(xintercept =
-as.numeric(as.Date(“2021-08-26”)), linetype=4)</p>
-</div>
-<div id="descriptive-statistics" class="section level1">
-<h1>Descriptive Statistics</h1>
-<p>str(BLS_county_employment_v3)</p>
+<p>BLS_county_employment_v4 %&gt;% filter(year &gt;= “2019”) %&gt;%
+ggplot(aes(x=date, y=Unemployment_Rate, colour=treatment,
+group=treatment)) + geom_smooth(aes(group = control), method = “auto”,
+size = 2, se = FALSE) + geom_vline(xintercept =
+as.numeric(as.Date(“2021-08-26”)), linetype=4) +
+scale_color_manual(values=c(“#4bcbab”, “#d83f54”))</p>
 </div>
 <div id="export-cv" class="section level1">
 <h1>Export CV</h1>
-<p>write.csv(BLS_county_employment_v3, “Documents/Coding
-Projects/quant_capstone/data_raw/BLS_county_employment_v3.csv”,
+<p>write.csv(BLS_county_employment_v4, “Documents/Coding
+Projects/quant_capstone/data_clean/BLS_county_employment_clean.csv”,
 row.names=FALSE)</p>
+</div>
+<div id="descriptive-statistics" class="section level1">
+<h1>Descriptive Statistics</h1>
+<p>str(BLS_county_employment_v4)</p>
+<div id="number-of-states" class="section level2">
+<h2>Number of states</h2>
+<p>with(BLS_county_employment_v4, length(unique(state)))</p>
+<p>with(BLS_county_employment_v4, length(unique(state[treatment ==
+‘1’])))</p>
+<p>with(BLS_county_employment_v4, length(unique(state[treatment ==
+‘0’])))</p>
+</div>
+<div id="number-of-counties" class="section level2">
+<h2>Number of counties</h2>
+<div id="total" class="section level3">
+<h3>total</h3>
+<p>with(BLS_county_employment_v4, length(unique(FIPS)))</p>
+</div>
+<div id="treatment" class="section level3">
+<h3>treatment</h3>
+<p>with(BLS_county_employment_v4, length(unique(FIPS[treatment ==
+‘1’])))</p>
+</div>
+<div id="control" class="section level3">
+<h3>control</h3>
+<p>with(BLS_county_employment_v4, length(unique(FIPS[treatment ==
+‘0’])))</p>
+<p>with(BLS_county_employment_v4, length(unique(FIPS[treatment == ‘0’ |
+treatment ==‘1’])))</p>
+</div>
+</div>
+<div id="number-of-observations-march-2021-to-oct-2023" class="section level2">
+<h2>Number of observations (March 2021 to Oct 2023)</h2>
+<p>with(BLS_county_employment_v4, length(Unemployment_Rate[date &gt;
+‘2021-03-01’]))</p>
+<div id="control-1" class="section level3">
+<h3>control</h3>
+<p>with(BLS_county_employment_v4, length(Unemployment_Rate[date &gt;
+‘2021-03-01’ &amp; treatment == ‘0’]))</p>
+</div>
+<div id="treatment-1" class="section level3">
+<h3>treatment</h3>
+<p>with(BLS_county_employment_v4, length(Unemployment_Rate[date &gt;
+‘2021-03-01’ &amp; treatment == ‘1’]))</p>
+</div>
+</div>
+<div id="size-of-labor-force" class="section level2">
+<h2>Size of labor force</h2>
+<div id="total-2020" class="section level3">
+<h3>total 2020</h3>
+<p>with(BLS_county_employment_v3, sum(Labor_Force[year == “2020” &amp;
+month==“1”]))</p>
+</div>
+<div id="treatment-2020" class="section level3">
+<h3>treatment 2020</h3>
+<p>with(BLS_county_employment_v3, sum(Labor_Force[treatment == ‘1’ &amp;
+year == “2020” &amp; month==“1”]))</p>
+</div>
+<div id="control-2020" class="section level3">
+<h3>control 2020</h3>
+<p>with(BLS_county_employment_v3, sum(Labor_Force[treatment == ‘0’ &amp;
+year == “2020” &amp; month==“1”]))</p>
+</div>
+<div id="total-2021" class="section level3">
+<h3>total 2021</h3>
+<p>with(BLS_county_employment_v3, sum(Labor_Force[year == “2021” &amp;
+month==“1”]))</p>
+</div>
+<div id="treatment-2021" class="section level3">
+<h3>treatment 2021</h3>
+<p>with(BLS_county_employment_v3, sum(Labor_Force[treatment == ‘1’ &amp;
+year == “2021” &amp; month==“1”]))</p>
+</div>
+<div id="control-2021" class="section level3">
+<h3>control 2021</h3>
+<p>with(BLS_county_employment_v3, sum(Labor_Force[treatment == ‘0’ &amp;
+year == “2021” &amp; month==“1”]))</p>
+</div>
+<div id="total-2022" class="section level3">
+<h3>total 2022</h3>
+<p>with(BLS_county_employment_v3, sum(Labor_Force[year == “2022” &amp;
+month==“1”]))</p>
+</div>
+<div id="treatment-2022" class="section level3">
+<h3>treatment 2022</h3>
+<p>with(BLS_county_employment_v3, sum(Labor_Force[treatment == ‘1’ &amp;
+year == “2022” &amp; month==“1”]))</p>
+</div>
+<div id="control-2022" class="section level3">
+<h3>control 2022</h3>
+<p>with(BLS_county_employment_v3, sum(Labor_Force[treatment == ‘0’ &amp;
+year == “2022” &amp; month==“1”]))</p>
+</div>
+<div id="total-2023" class="section level3">
+<h3>total 2023</h3>
+<p>with(BLS_county_employment_v3, sum(Labor_Force[year == “2023” &amp;
+month==“1”]))</p>
+</div>
+<div id="treatment-2023" class="section level3">
+<h3>treatment 2023</h3>
+<p>with(BLS_county_employment_v3, sum(Labor_Force[treatment == ‘1’ &amp;
+year == “2023” &amp; month==“1”]))</p>
+</div>
+<div id="control-2023" class="section level3">
+<h3>control 2023</h3>
+<p>with(BLS_county_employment_v3, sum(Labor_Force[treatment == ‘0’ &amp;
+year == “2023” &amp; month==“1”]))</p>
+</div>
+</div>
+<div id="avg-unemployment-rate" class="section level2">
+<h2>Avg Unemployment Rate</h2>
+<div id="all-jan-2020" class="section level3">
+<h3>all Jan 2020</h3>
+<p>with(BLS_county_employment_v3, describe(Unemployment_Rate[year ==
+“2020” &amp; month==“1”]))</p>
+</div>
+<div id="control-jan-2020" class="section level3">
+<h3>control Jan 2020</h3>
+<p>with(BLS_county_employment_v3, describe(Unemployment_Rate[treatment
+== ‘0’ &amp; year == “2020” &amp; month==“1”]))</p>
+</div>
+<div id="treatment-jan-2020" class="section level3">
+<h3>treatment Jan 2020</h3>
+<p>with(BLS_county_employment_v3, describe(Unemployment_Rate[treatment
+== ‘1’ &amp; year == “2020” &amp; month==“1”]))</p>
+</div>
+<div id="all-jan-2021" class="section level3">
+<h3>all Jan 2021</h3>
+<p>with(BLS_county_employment_v3, describe(Unemployment_Rate[year ==
+“2021” &amp; month==“1”]))</p>
+</div>
+<div id="control-jan-2021" class="section level3">
+<h3>control Jan 2021</h3>
+<p>with(BLS_county_employment_v3, describe(Unemployment_Rate[treatment
+== ‘0’ &amp; year == “2021” &amp; month==“1”]))</p>
+</div>
+<div id="treatment-jan-2021" class="section level3">
+<h3>treatment Jan 2021</h3>
+<p>with(BLS_county_employment_v3, describe(Unemployment_Rate[treatment
+== ‘1’ &amp; year == “2021” &amp; month==“1”]))</p>
+</div>
+<div id="all-jan-2022" class="section level3">
+<h3>all Jan 2022</h3>
+<p>with(BLS_county_employment_v3, describe(Unemployment_Rate[year ==
+“2022” &amp; month==“1”]))</p>
+</div>
+<div id="control-jan-2022" class="section level3">
+<h3>control Jan 2022</h3>
+<p>with(BLS_county_employment_v3, describe(Unemployment_Rate[treatment
+== ‘0’ &amp; year == “2022” &amp; month==“1”]))</p>
+</div>
+<div id="treatment-jan-2022" class="section level3">
+<h3>treatment Jan 2022</h3>
+<p>with(BLS_county_employment_v3, describe(Unemployment_Rate[treatment
+== ‘1’ &amp; year == “2022” &amp; month==“1”]))</p>
+</div>
+<div id="all-jan-2023" class="section level3">
+<h3>all Jan 2023</h3>
+<p>with(BLS_county_employment_v3, describe(Unemployment_Rate[year ==
+“2023” &amp; month==“1”]))</p>
+</div>
+<div id="control-jan-2023" class="section level3">
+<h3>control Jan 2023</h3>
+<p>with(BLS_county_employment_v3, describe(Unemployment_Rate[treatment
+== ‘0’ &amp; year == “2023” &amp; month==“1”]))</p>
+</div>
+<div id="treatment-jan-2023" class="section level3">
+<h3>treatment Jan 2023</h3>
+<p>with(BLS_county_employment_v3, describe(Unemployment_Rate[treatment
+== ‘1’ &amp; year == “2023” &amp; month==“1”]))</p>
 <!-- rnb-text-end -->
 </div>
+</div>
+</div>
 
-<div id="rmd-source-code">LS0tCnRpdGxlOiAiQ2Fwc3RvbmUgRGF0YSBDbGVhbmluZyIKb3V0cHV0OiBodG1sX25vdGVib29rCi0tLQoKbGlicmFyeShyZWFkcikKbGlicmFyeShkcGx5cikKbGlicmFyeShsdWJyaWRhdGUpCmxpYnJhcnkodGlkeXZlcnNlKQoKCiMgTG9hZCBjb3VudHktbGV2ZWwgdW5lbXBsb3ltZW50IGRhdGEKCkJMU19jb3VudHlfZW1wbG95bWVudCA8LSByZWFkX2NzdigiRG9jdW1lbnRzL0NvZGluZyBQcm9qZWN0cy9xdWFudF9jYXBzdG9uZS9kYXRhX3Jhdy9CTFNfY291bnR5X2VtcGxveW1lbnQuY3N2IikKCgojIFJlbW92ZSBvYnNlcnZhdGlvbnMgYmVmb3JlIDIwMTUKCkJMU19jb3VudHlfZW1wbG95bWVudCA8LSBCTFNfY291bnR5X2VtcGxveW1lbnQgJT4lIGZpbHRlcih5ZWFyID4gIjIwMTQiKQoKCiMgTWVyZ2UgaW4gREMgZGF0YQoKQkxTX2NvdW50eV9lbXBsb3ltZW50X0RDIDwtIHJlYWRfY3N2KCJEb2N1bWVudHMvQ29kaW5nIFByb2plY3RzL3F1YW50X2NhcHN0b25lL2RhdGFfcmF3L0JMU19jb3VudHlfZW1wbG95bWVudF9EQy5jc3YiKQoKQkxTX2NvdW50eV9lbXBsb3ltZW50X3YyIDwtIHJiaW5kKEJMU19jb3VudHlfZW1wbG95bWVudCxCTFNfY291bnR5X2VtcGxveW1lbnRfREMpCgoKIyBNZXJnZSBpbiBtb3JhdG9yaWEgZGF0ZXMKCm1vcmF0b3JpYV9kYXRlcyA8LSByZWFkX2NzdigiRG9jdW1lbnRzL0NvZGluZyBQcm9qZWN0cy9xdWFudF9jYXBzdG9uZS9kYXRhX3Jhdy9tb3JhdG9yaWFfZGF0ZXMuY3N2IikKCkJMU19jb3VudHlfZW1wbG95bWVudF92MyA8LSBtZXJnZShCTFNfY291bnR5X2VtcGxveW1lbnRfdjIsbW9yYXRvcmlhX2RhdGVzLGJ5PSgic3RhdGUiKSkKCnZpZXcoQkxTX2NvdW50eV9lbXBsb3ltZW50X3YzKQoKIyBjb252ZXJ0IGNvbnRyb2wgYW5kIHRyZWF0bWVudCB2YXJpYWJsZSB0byBiaW5hcnkKCkJMU19jb3VudHlfZW1wbG95bWVudF92MyRjb250cm9sIDwtIGZhY3RvcihCTFNfY291bnR5X2VtcGxveW1lbnRfdjMkY29udHJvbCwKICAgICAgICAgICAgICAgICAgICAgICAgICAgIGxldmVscyA9IDA6MSkKICAgICAgICAgICAgICAgICAgICAgICAgICAgIApCTFNfY291bnR5X2VtcGxveW1lbnRfdjMkdHJlYXRtZW50IDwtIGZhY3RvcihCTFNfY291bnR5X2VtcGxveW1lbnRfdjMkdHJlYXRtZW50LAogICAgICAgICAgICAgICAgICAgICAgICAgICAgbGV2ZWxzID0gMDoxKQogICAgICAgICAgICAgICAgICAgICAgICAgICAgCnRhYmxlKEJMU19jb3VudHlfZW1wbG95bWVudF92MyRjb250cm9sKQoKIyBQbG90IFVuZW1wbG95bWVudCBSYXRlCgpCTFNfY291bnR5X2VtcGxveW1lbnRfdjMgJT4lIAogIG11dGF0ZShkYXRlID0gYXMuRGF0ZShwYXN0ZSh5ZWFyLCBtb250aCwgIjAxIiwgc2VwID0gIi0iKSkpICU+JQogIGdncGxvdChhZXMoeD1kYXRlLCB5PVVuZW1wbG95bWVudF9SYXRlLCBjb2xvdXI9Y29udHJvbCwgZ3JvdXA9Y29udHJvbCkpICsgICAgICAgIGdlb21fc21vb3RoKGFlcyhncm91cCA9IGNvbnRyb2wpLCBtZXRob2QgPSAiYXV0byIsIHNpemUgPSAyLCBzZSA9IEZBTFNFKSArCiAgZ2VvbV92bGluZSh4aW50ZXJjZXB0ID0gYXMubnVtZXJpYyhhcy5EYXRlKCIyMDIxLTA4LTI2IikpLCBsaW5ldHlwZT00KQoKCiMgRGVzY3JpcHRpdmUgU3RhdGlzdGljcwoKc3RyKEJMU19jb3VudHlfZW1wbG95bWVudF92MykKCgojIEV4cG9ydCBDVgoKd3JpdGUuY3N2KEJMU19jb3VudHlfZW1wbG95bWVudF92MywgIkRvY3VtZW50cy9Db2RpbmcgUHJvamVjdHMvcXVhbnRfY2Fwc3RvbmUvZGF0YV9yYXcvQkxTX2NvdW50eV9lbXBsb3ltZW50X3YzLmNzdiIsIHJvdy5uYW1lcz1GQUxTRSkKCg==</div>
+<div id="rmd-source-code">LS0tCnRpdGxlOiAiQ2Fwc3RvbmUgRGF0YSBDbGVhbmluZyIKb3V0cHV0OiBodG1sX25vdGVib29rCi0tLQoKbGlicmFyeShyZWFkcikKbGlicmFyeShkcGx5cikKbGlicmFyeShsdWJyaWRhdGUpCmxpYnJhcnkodGlkeXZlcnNlKQpsaWJyYXJ5KHBzeWNoKQoKCiMgTG9hZCBjb3VudHktbGV2ZWwgdW5lbXBsb3ltZW50IGRhdGEKCkJMU19jb3VudHlfZW1wbG95bWVudCA8LSByZWFkX2NzdigiRG9jdW1lbnRzL0NvZGluZyBQcm9qZWN0cy9xdWFudF9jYXBzdG9uZS9kYXRhX3Jhdy9CTFNfY291bnR5X2VtcGxveW1lbnQuY3N2IikKCgojIFJlbW92ZSBvYnNlcnZhdGlvbnMgYmVmb3JlIDIwMTUKCkJMU19jb3VudHlfZW1wbG95bWVudCA8LSBCTFNfY291bnR5X2VtcGxveW1lbnQgJT4lIGZpbHRlcih5ZWFyID4gIjIwMTQiKQoKCiMgTWVyZ2UgaW4gREMgZGF0YQoKQkxTX2NvdW50eV9lbXBsb3ltZW50X0RDIDwtIHJlYWRfY3N2KCJEb2N1bWVudHMvQ29kaW5nIFByb2plY3RzL3F1YW50X2NhcHN0b25lL2RhdGFfcmF3L0JMU19jb3VudHlfZW1wbG95bWVudF9EQy5jc3YiKQoKQkxTX2NvdW50eV9lbXBsb3ltZW50X3YyIDwtIHJiaW5kKEJMU19jb3VudHlfZW1wbG95bWVudCxCTFNfY291bnR5X2VtcGxveW1lbnRfREMpCgoKIyBNZXJnZSBpbiBtb3JhdG9yaWEgZGF0ZXMKCm1vcmF0b3JpYV9kYXRlcyA8LSByZWFkX2NzdigiRG9jdW1lbnRzL0NvZGluZyBQcm9qZWN0cy9xdWFudF9jYXBzdG9uZS9kYXRhX3Jhdy9tb3JhdG9yaWFfZGF0ZXMuY3N2IikKCkJMU19jb3VudHlfZW1wbG95bWVudF92MyA8LSBtZXJnZShCTFNfY291bnR5X2VtcGxveW1lbnRfdjIsbW9yYXRvcmlhX2RhdGVzLGJ5PSgic3RhdGUiKSkKCnZpZXcoQkxTX2NvdW50eV9lbXBsb3ltZW50X3YzKQoKIyBjb252ZXJ0IGNvbnRyb2wgYW5kIHRyZWF0bWVudCB2YXJpYWJsZSB0byBiaW5hcnkKCkJMU19jb3VudHlfZW1wbG95bWVudF92MyRjb250cm9sIDwtIGZhY3RvcihCTFNfY291bnR5X2VtcGxveW1lbnRfdjMkY29udHJvbCwKICAgICAgICAgICAgICAgICAgICAgICAgICAgIGxldmVscyA9IDA6MSkKICAgICAgICAgICAgICAgICAgICAgICAgICAgIApCTFNfY291bnR5X2VtcGxveW1lbnRfdjMkdHJlYXRtZW50IDwtIGZhY3RvcihCTFNfY291bnR5X2VtcGxveW1lbnRfdjMkdHJlYXRtZW50LAogICAgICAgICAgICAgICAgICAgICAgICAgICAgbGV2ZWxzID0gMDoxKQogICAgICAgICAgICAgICAgICAgICAgICAgICAgCnRhYmxlKEJMU19jb3VudHlfZW1wbG95bWVudF92MyRjb250cm9sKQoKQkxTX2NvdW50eV9lbXBsb3ltZW50X3Y0IDwtIEJMU19jb3VudHlfZW1wbG95bWVudF92MyAlPiUgCiAgbXV0YXRlKGRhdGUgPSBhcy5EYXRlKHBhc3RlKHllYXIsIG1vbnRoLCAiMDEiLCBzZXAgPSAiLSIpKSkKCiMgUGxvdCBVbmVtcGxveW1lbnQgUmF0ZQoKQkxTX2NvdW50eV9lbXBsb3ltZW50X3Y0ICU+JSAKICBmaWx0ZXIoeWVhciA+PSAiMjAxOSIpICU+JQogIGdncGxvdChhZXMoeD1kYXRlLCB5PVVuZW1wbG95bWVudF9SYXRlLCBjb2xvdXI9dHJlYXRtZW50LCBncm91cD10cmVhdG1lbnQpKSArICAgICAgICBnZW9tX3Ntb290aChhZXMoZ3JvdXAgPSBjb250cm9sKSwgbWV0aG9kID0gImF1dG8iLCBzaXplID0gMiwgc2UgPSBGQUxTRSkgKwogIGdlb21fdmxpbmUoeGludGVyY2VwdCA9IGFzLm51bWVyaWMoYXMuRGF0ZSgiMjAyMS0wOC0yNiIpKSwgbGluZXR5cGU9NCkgKyAgICAgICAgIHNjYWxlX2NvbG9yX21hbnVhbCh2YWx1ZXM9YygiIzRiY2JhYiIsICIjZDgzZjU0IikpCgojIEV4cG9ydCBDVgoKd3JpdGUuY3N2KEJMU19jb3VudHlfZW1wbG95bWVudF92NCwgIkRvY3VtZW50cy9Db2RpbmcgUHJvamVjdHMvcXVhbnRfY2Fwc3RvbmUvZGF0YV9jbGVhbi9CTFNfY291bnR5X2VtcGxveW1lbnRfY2xlYW4uY3N2Iiwgcm93Lm5hbWVzPUZBTFNFKQoKCiMgRGVzY3JpcHRpdmUgU3RhdGlzdGljcwoKc3RyKEJMU19jb3VudHlfZW1wbG95bWVudF92NCkKCgojIyBOdW1iZXIgb2Ygc3RhdGVzCgp3aXRoKEJMU19jb3VudHlfZW1wbG95bWVudF92NCwgbGVuZ3RoKHVuaXF1ZShzdGF0ZSkpKQoKd2l0aChCTFNfY291bnR5X2VtcGxveW1lbnRfdjQsIGxlbmd0aCh1bmlxdWUoc3RhdGVbdHJlYXRtZW50ID09ICcxJ10pKSkKCndpdGgoQkxTX2NvdW50eV9lbXBsb3ltZW50X3Y0LCBsZW5ndGgodW5pcXVlKHN0YXRlW3RyZWF0bWVudCA9PSAnMCddKSkpCgojIyBOdW1iZXIgb2YgY291bnRpZXMKCiMjIyB0b3RhbAp3aXRoKEJMU19jb3VudHlfZW1wbG95bWVudF92NCwgbGVuZ3RoKHVuaXF1ZShGSVBTKSkpCgojIyMgdHJlYXRtZW50CndpdGgoQkxTX2NvdW50eV9lbXBsb3ltZW50X3Y0LCBsZW5ndGgodW5pcXVlKEZJUFNbdHJlYXRtZW50ID09ICcxJ10pKSkKCiMjIyBjb250cm9sCndpdGgoQkxTX2NvdW50eV9lbXBsb3ltZW50X3Y0LCBsZW5ndGgodW5pcXVlKEZJUFNbdHJlYXRtZW50ID09ICcwJ10pKSkKCgp3aXRoKEJMU19jb3VudHlfZW1wbG95bWVudF92NCwgbGVuZ3RoKHVuaXF1ZShGSVBTW3RyZWF0bWVudCA9PSAnMCcgfCB0cmVhdG1lbnQgPT0nMSddKSkpCgoKIyMgTnVtYmVyIG9mIG9ic2VydmF0aW9ucyAoTWFyY2ggMjAyMSB0byBPY3QgMjAyMykKCndpdGgoQkxTX2NvdW50eV9lbXBsb3ltZW50X3Y0LCBsZW5ndGgoVW5lbXBsb3ltZW50X1JhdGVbZGF0ZSA+ICcyMDIxLTAzLTAxJ10pKQoKIyMjIGNvbnRyb2wKd2l0aChCTFNfY291bnR5X2VtcGxveW1lbnRfdjQsIGxlbmd0aChVbmVtcGxveW1lbnRfUmF0ZVtkYXRlID4gJzIwMjEtMDMtMDEnICYgdHJlYXRtZW50ID09ICcwJ10pKQoKIyMjIHRyZWF0bWVudAp3aXRoKEJMU19jb3VudHlfZW1wbG95bWVudF92NCwgbGVuZ3RoKFVuZW1wbG95bWVudF9SYXRlW2RhdGUgPiAnMjAyMS0wMy0wMScgJiB0cmVhdG1lbnQgPT0gJzEnXSkpCgoKIyMgU2l6ZSBvZiBsYWJvciBmb3JjZQoKIyMjIHRvdGFsIDIwMjAKd2l0aChCTFNfY291bnR5X2VtcGxveW1lbnRfdjMsIHN1bShMYWJvcl9Gb3JjZVt5ZWFyID09ICIyMDIwIiAmIG1vbnRoPT0iMSJdKSkKCiMjIyB0cmVhdG1lbnQgMjAyMAp3aXRoKEJMU19jb3VudHlfZW1wbG95bWVudF92Mywgc3VtKExhYm9yX0ZvcmNlW3RyZWF0bWVudCA9PSAnMScgJiB5ZWFyID09ICIyMDIwIiAmIG1vbnRoPT0iMSJdKSkKCiMjIyBjb250cm9sIDIwMjAKd2l0aChCTFNfY291bnR5X2VtcGxveW1lbnRfdjMsIHN1bShMYWJvcl9Gb3JjZVt0cmVhdG1lbnQgPT0gJzAnICYgeWVhciA9PSAiMjAyMCIgJiBtb250aD09IjEiXSkpCgojIyMgdG90YWwgMjAyMQp3aXRoKEJMU19jb3VudHlfZW1wbG95bWVudF92Mywgc3VtKExhYm9yX0ZvcmNlW3llYXIgPT0gIjIwMjEiICYgbW9udGg9PSIxIl0pKQoKIyMjIHRyZWF0bWVudCAyMDIxCndpdGgoQkxTX2NvdW50eV9lbXBsb3ltZW50X3YzLCBzdW0oTGFib3JfRm9yY2VbdHJlYXRtZW50ID09ICcxJyAmIHllYXIgPT0gIjIwMjEiICYgbW9udGg9PSIxIl0pKQoKIyMjIGNvbnRyb2wgMjAyMQp3aXRoKEJMU19jb3VudHlfZW1wbG95bWVudF92Mywgc3VtKExhYm9yX0ZvcmNlW3RyZWF0bWVudCA9PSAnMCcgJiB5ZWFyID09ICIyMDIxIiAmIG1vbnRoPT0iMSJdKSkKCiMjIyB0b3RhbCAyMDIyCndpdGgoQkxTX2NvdW50eV9lbXBsb3ltZW50X3YzLCBzdW0oTGFib3JfRm9yY2VbeWVhciA9PSAiMjAyMiIgJiBtb250aD09IjEiXSkpCgojIyMgdHJlYXRtZW50IDIwMjIKd2l0aChCTFNfY291bnR5X2VtcGxveW1lbnRfdjMsIHN1bShMYWJvcl9Gb3JjZVt0cmVhdG1lbnQgPT0gJzEnICYgeWVhciA9PSAiMjAyMiIgJiBtb250aD09IjEiXSkpCgojIyMgY29udHJvbCAyMDIyCndpdGgoQkxTX2NvdW50eV9lbXBsb3ltZW50X3YzLCBzdW0oTGFib3JfRm9yY2VbdHJlYXRtZW50ID09ICcwJyAmIHllYXIgPT0gIjIwMjIiICYgbW9udGg9PSIxIl0pKQoKIyMjIHRvdGFsIDIwMjMKd2l0aChCTFNfY291bnR5X2VtcGxveW1lbnRfdjMsIHN1bShMYWJvcl9Gb3JjZVt5ZWFyID09ICIyMDIzIiAmIG1vbnRoPT0iMSJdKSkKCiMjIyB0cmVhdG1lbnQgMjAyMwp3aXRoKEJMU19jb3VudHlfZW1wbG95bWVudF92Mywgc3VtKExhYm9yX0ZvcmNlW3RyZWF0bWVudCA9PSAnMScgJiB5ZWFyID09ICIyMDIzIiAmIG1vbnRoPT0iMSJdKSkKCiMjIyBjb250cm9sIDIwMjMKd2l0aChCTFNfY291bnR5X2VtcGxveW1lbnRfdjMsIHN1bShMYWJvcl9Gb3JjZVt0cmVhdG1lbnQgPT0gJzAnICYgeWVhciA9PSAiMjAyMyIgJiBtb250aD09IjEiXSkpCgojIyBBdmcgVW5lbXBsb3ltZW50IFJhdGUKCiMjIyBhbGwgSmFuIDIwMjAKd2l0aChCTFNfY291bnR5X2VtcGxveW1lbnRfdjMsIGRlc2NyaWJlKFVuZW1wbG95bWVudF9SYXRlW3llYXIgPT0gIjIwMjAiICYgbW9udGg9PSIxIl0pKQoKIyMjIGNvbnRyb2wgSmFuIDIwMjAKd2l0aChCTFNfY291bnR5X2VtcGxveW1lbnRfdjMsIGRlc2NyaWJlKFVuZW1wbG95bWVudF9SYXRlW3RyZWF0bWVudCA9PSAnMCcgJiB5ZWFyID09ICIyMDIwIiAmIG1vbnRoPT0iMSJdKSkKCiMjIyB0cmVhdG1lbnQgSmFuIDIwMjAKd2l0aChCTFNfY291bnR5X2VtcGxveW1lbnRfdjMsIGRlc2NyaWJlKFVuZW1wbG95bWVudF9SYXRlW3RyZWF0bWVudCA9PSAnMScgJiB5ZWFyID09ICIyMDIwIiAmIG1vbnRoPT0iMSJdKSkKCgojIyMgYWxsIEphbiAyMDIxCndpdGgoQkxTX2NvdW50eV9lbXBsb3ltZW50X3YzLCBkZXNjcmliZShVbmVtcGxveW1lbnRfUmF0ZVt5ZWFyID09ICIyMDIxIiAmIG1vbnRoPT0iMSJdKSkKCiMjIyBjb250cm9sIEphbiAyMDIxCndpdGgoQkxTX2NvdW50eV9lbXBsb3ltZW50X3YzLCBkZXNjcmliZShVbmVtcGxveW1lbnRfUmF0ZVt0cmVhdG1lbnQgPT0gJzAnICYgeWVhciA9PSAiMjAyMSIgJiBtb250aD09IjEiXSkpCgojIyMgdHJlYXRtZW50IEphbiAyMDIxCndpdGgoQkxTX2NvdW50eV9lbXBsb3ltZW50X3YzLCBkZXNjcmliZShVbmVtcGxveW1lbnRfUmF0ZVt0cmVhdG1lbnQgPT0gJzEnICYgeWVhciA9PSAiMjAyMSIgJiBtb250aD09IjEiXSkpCgoKIyMjIGFsbCBKYW4gMjAyMgp3aXRoKEJMU19jb3VudHlfZW1wbG95bWVudF92MywgZGVzY3JpYmUoVW5lbXBsb3ltZW50X1JhdGVbeWVhciA9PSAiMjAyMiIgJiBtb250aD09IjEiXSkpCgojIyMgY29udHJvbCBKYW4gMjAyMgp3aXRoKEJMU19jb3VudHlfZW1wbG95bWVudF92MywgZGVzY3JpYmUoVW5lbXBsb3ltZW50X1JhdGVbdHJlYXRtZW50ID09ICcwJyAmIHllYXIgPT0gIjIwMjIiICYgbW9udGg9PSIxIl0pKQoKIyMjIHRyZWF0bWVudCBKYW4gMjAyMgp3aXRoKEJMU19jb3VudHlfZW1wbG95bWVudF92MywgZGVzY3JpYmUoVW5lbXBsb3ltZW50X1JhdGVbdHJlYXRtZW50ID09ICcxJyAmIHllYXIgPT0gIjIwMjIiICYgbW9udGg9PSIxIl0pKQoKCiMjIyBhbGwgSmFuIDIwMjMKd2l0aChCTFNfY291bnR5X2VtcGxveW1lbnRfdjMsIGRlc2NyaWJlKFVuZW1wbG95bWVudF9SYXRlW3llYXIgPT0gIjIwMjMiICYgbW9udGg9PSIxIl0pKQoKIyMjIGNvbnRyb2wgSmFuIDIwMjMKd2l0aChCTFNfY291bnR5X2VtcGxveW1lbnRfdjMsIGRlc2NyaWJlKFVuZW1wbG95bWVudF9SYXRlW3RyZWF0bWVudCA9PSAnMCcgJiB5ZWFyID09ICIyMDIzIiAmIG1vbnRoPT0iMSJdKSkKCiMjIyB0cmVhdG1lbnQgSmFuIDIwMjMKd2l0aChCTFNfY291bnR5X2VtcGxveW1lbnRfdjMsIGRlc2NyaWJlKFVuZW1wbG95bWVudF9SYXRlW3RyZWF0bWVudCA9PSAnMScgJiB5ZWFyID09ICIyMDIzIiAmIG1vbnRoPT0iMSJdKSkK</div>
 
 
 
