@@ -38,8 +38,7 @@ BLS_county_employment_clean %>%
 BLS_county_employment_clean %>% 
   filter(year >= "2020") %>%
   ggplot(aes(x=date, y=Unemployment_Rate, colour=treatment, group=state)) +        geom_smooth(aes(group = state), method = "auto", size = 0.5, se = FALSE, alpha = 0.5) +
-    geom_smooth(aes(group = treatment), size = 2, se = FALSE) +
-  geom_vline(xintercept = as.numeric(as.Date("2021-08-26")), linetype=4) +         scale_color_manual(values=c("#AAFF00", "#d83f54"))
+  geom_vline(xintercept = as.numeric(as.Date("2021-08-26")), linetype=4) +         scale_color_manual(values=c("#115f9a", "#d83f54"))
   
 with(BLS_county_employment_clean,
   max(Unemployment_Rate[date<'2020-12-01']))
