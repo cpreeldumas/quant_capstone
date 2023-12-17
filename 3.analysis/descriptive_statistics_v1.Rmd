@@ -10,6 +10,7 @@ library(dplyr)
 library(lubridate)
 library(tidyverse)
 library(psych)
+library(moments)
 
 
 BLS_county_employment_clean <- read_csv("Documents/Coding Projects/quant_capstone/data_clean/BLS_county_employment_clean.csv")
@@ -44,7 +45,6 @@ with(BLS_county_employment_clean,
   max(Unemployment_Rate[date<'2020-12-01']))
 
 
-
 # Descriptive Statistics
 
 str(BLS_county_employment_clean)
@@ -71,6 +71,20 @@ with(BLS_county_employment_clean, length(unique(FIPS[treatment == '0'])))
 
 
 with(BLS_county_employment_clean, length(unique(FIPS[treatment == '0' | treatment =='1'])))
+
+## Data quality check
+
+min(BLS_county_employment_clean$Unemployment_Rate)
+
+sum(is.na(BLS_county_employment_clean$Unemployment_Rate))
+
+sum(is.na(BLS_county_employment_clean$FIPS))
+
+sum(is.na(BLS_county_employment_clean$Labor_Force))
+
+which(is.na(BLS_county_employment_clean)) 
+
+skewness(BLS_county_employment_clean$Unemployment_Rate)
 
 
 ## Number of observations (March 2020 to Oct 2023)
