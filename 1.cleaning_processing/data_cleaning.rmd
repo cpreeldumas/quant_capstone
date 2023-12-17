@@ -47,12 +47,6 @@ table(BLS_county_employment_v3$control)
 BLS_county_employment_v4 <- BLS_county_employment_v3 %>% 
   mutate(date = as.Date(paste(year, month, "01", sep = "-")))
 
-# Plot Unemployment Rate
-
-BLS_county_employment_v4 %>% 
-  filter(year >= "2019") %>%
-  ggplot(aes(x=date, y=Unemployment_Rate, colour=treatment, group=treatment)) +        geom_smooth(aes(group = control), method = "auto", size = 2, se = FALSE) +
-  geom_vline(xintercept = as.numeric(as.Date("2021-08-26")), linetype=4) +         scale_color_manual(values=c("#4bcbab", "#d83f54"))
 
 # Export CV
 
