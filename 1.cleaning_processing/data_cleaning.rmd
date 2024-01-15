@@ -47,6 +47,12 @@ table(BLS_county_employment_v3$control)
 BLS_county_employment_v4 <- BLS_county_employment_v3 %>% 
   mutate(date = as.Date(paste(year, month, "01", sep = "-")))
 
+# Add 'first treat' column 
+
+BLS_county_employment_v4$first.treat[BLS_county_employment_v4$treatment == 1] <- BLS_county_employment_v4['federal-end']
+
+BLS_county_employment_v4$first.treat[BLS_county_employment_v4$treatment == 0] <- BLS_county_employment_v4['state-end']
+
 
 # Export CV
 
