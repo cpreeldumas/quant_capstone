@@ -1,0 +1,38 @@
+---
+title: "DiD Initial Exploration"
+author: "Camille Preel-Dumas"
+date: "2024-01-22"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+# set up
+library(readr)
+library(lubridate)
+library(tidyverse)
+library(janitor)
+
+
+bls_data <- read_csv("C:/Users/cp3789/Documents/GitHub/quant_capstone/data_clean/BLS_county_employment_clean.csv") %>% 
+  clean_names("snake") #convert column names to snake case
+
+#need to make numeric versions of the date variables - not done yet
+bls_data %>% 
+  mutate(across(c(state_start, state_end, federal_start, federal_end), as.numeric)) %>% 
+  mutate(first_treat = case_when(
+    treatment == 1 ~ federal_end,
+    treatment == 0 ~ state_end,
+    state == "MA" ~ 0)) #never-treated group
+
+bls_data %>% 
+  group_by(state, countyname, fips) %>% tally()
+
+bls_data %>% 
+  select(date, fips, unemployment_rate, )
+```
+
