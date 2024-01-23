@@ -1,0 +1,11 @@
+Working with Missing Data
+
+health$age
+
+which(health$age == -1)
+
+health$age[which(health$age == -1 )] <- NA
+
+#two ways to confirm you have changed missing data to N/A
+is.na(health$age)
+table(is.na(health$age))
