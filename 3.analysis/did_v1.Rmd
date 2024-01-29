@@ -18,21 +18,28 @@ library(tidyverse)
 library(janitor)
 
 
-bls_data <- read_csv("C:/Users/cp3789/Documents/GitHub/quant_capstone/data_clean/BLS_county_employment_clean.csv") %>% 
+bls_data <- read_csv("/Users/cpreeldumas/Documents/GitHub/quant_capstone/data_clean/BLS_county_employment_clean.csv") %>% 
   clean_names("snake") #convert column names to snake case
 
-#need to make numeric versions of the date variables - not done yet
-bls_data %>% 
-  mutate(across(c(state_start, state_end, federal_start, federal_end), as.numeric)) %>% 
+#making a numeric version of dates for first treat column
+bls_data_did <- bls_data %>% 
+  mutate(across(c(state_start, state_end, federal_start, federal_end), mdy)) %>% 
+  mutate(across(
+    .cols = c(state_start, state_end, federal_start, federal_end), 
+    .fns = ~ paste0(year(.x), str_pad(month(.x),
+                                      width = 2,
+                                      side = "left",
+                                      pad = "0")),
+    .names = "{.col}_num")) %>% 
+  mutate(across(ends_with("_num"), as.numeric)) %>% 
   mutate(first_treat = case_when(
-    treatment == 1 ~ federal_end,
-    treatment == 0 ~ state_end,
-    state == "MA" ~ 0)) #never-treated group
+    state == "MA" ~ 0, #never-treated group
+    treatment == 1 ~ federal_end_num,
+    treatment == 0 ~ state_end_num)) 
 
-bls_data %>% 
-  group_by(state, countyname, fips) %>% tally()
+bls_data_did %>% 
+  group_by(state, treatment, federal_end, state_end, first_treat) %>% 
+  tally()
 
-bls_data %>% 
-  select(date, fips, unemployment_rate, )
 ```
 
