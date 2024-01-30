@@ -17,7 +17,6 @@ library(lubridate)
 library(tidyverse)
 library(janitor)
 
-
 bls_data <- read_csv("/Users/cpreeldumas/Documents/GitHub/quant_capstone/data_clean/BLS_county_employment_clean.csv") %>% 
   clean_names("snake") #convert column names to snake case
 
