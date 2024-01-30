@@ -9,6 +9,7 @@ library(stringr)
 setwd("C:/Users/User/OneDrive/Desktop/New folder/NYU Classes/Quantitative Capstone/Covariates/2018")
 dir()
 
+#I had to delete row 2 of metadata in excel first to help the class of age-dependency column remain integer
 AgeSex <- read.csv("ACSST5Y2018.S0101_Age and Sex Estimates 2018_5Yr Estimates-Data_row2deleted.csv",stringsAsFactors=TRUE)
 View(AgeSex)
 
@@ -24,6 +25,7 @@ print(Income)
 AgeSex[c('First Name', 'Last Name','State')] <- str_split_fixed(AgeSex$NAME, ' ', 3)
 
 
+
 # How to rearrange columns now??
 #there's a website that suggested sth like this
 # Rearrange columns and remove original name column
@@ -33,8 +35,28 @@ df
 
 
 #anyway, back to data
-df2<-(AgeSex$S0101_C02_034E)
+mean(AgeSex$S0101_C01_034E)
+df2<-(AgeSex$S0101_C01_034E)
+print(df2)
 class(df2)
+
+df1<-AgeSex[c('GEO_ID','First Name', 'Last Name', 'State','S0101_C01_034E')]
+View(df1)
+
+setwd("C:/Users/User/OneDrive/Desktop/New folder/NYU Classes/Quantitative Capstone/Covariates/2018")
+dir()
+Income <- read.csv("ACSST5Y2018.S1903-Data_Median Income Only_2018_5 Yr estimates_row2deleted.csv",stringsAsFactors=TRUE)
+
+Income <- read.csv("ACSST5Y2018.S1903-Data_Median Income Only_2018_5 Yr estimates_row2deleted.csv",stringsAsFactors=TRUE,header=TRUE)
+View(Income)
+df3<-(Income$S1903_C01_001E)
+mean(df3)
+#still struggling to change the household estimate of income (column3) into numerical 
+
+# Split name column into firstname and last name
+Income[c('First Name', 'Last Name','State')] <- str_split_fixed(Income$NAME, ' ', 3)
+df5<-Income[c('GEO_ID','First Name', 'Last Name', 'State','S1903_C01_001E')]
+View(df5)
 
 Working with Missing Data
 
