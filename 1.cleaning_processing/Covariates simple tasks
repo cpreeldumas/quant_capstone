@@ -58,6 +58,11 @@ Income[c('First Name', 'Last Name','State')] <- str_split_fixed(Income$NAME, ' '
 df5<-Income[c('GEO_ID','First Name', 'Last Name', 'State','S1903_C01_001E')]
 View(df5)
 
+#Joining Age and Income files
+joined_AgeIncome<-merge(df1, df5, by.x = "First Name", by.y = "First Name")
+View(joined_AgeIncome)
+
+
 Working with Missing Data
 
 health$age
