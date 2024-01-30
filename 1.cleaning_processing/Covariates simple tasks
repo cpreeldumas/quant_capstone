@@ -1,3 +1,29 @@
+library() 
+
+install.packages("tidyr")
+library(tidyr)
+
+install.packages("stringr")
+library(stringr)
+
+setwd("C:/Users/User/OneDrive/Desktop/New folder/NYU Classes/Quantitative Capstone/Covariates/2018")
+dir()
+
+AgeSex <- read.csv("ACSST5Y2018.S0101_Age and Sex Estimates 2018_5Yr Estimates-Data.csv")  
+Income <- read.csv("ACSST5Y2018.S1903-Data_Median Income Only_2018_5 Yr estimates.csv")  
+
+print(AgeSex)
+print(Income)
+
+# Split name column into firstname and last name
+AgeSex[c('First Name', 'Last Name','State')] <- str_split_fixed(AgeSex$NAME, ' ', 3)
+# Rearrange columns and remove original name column
+df <- AgeSex[c('First Name', 'Last Name', 'State')]
+
+print(" Data frame after splitting: ")
+df
+
+
 Working with Missing Data
 
 health$age
