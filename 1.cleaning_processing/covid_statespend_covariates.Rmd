@@ -109,7 +109,7 @@ deaths <- read_csv("/Users/cpreeldumas/Documents/GitHub/quant_capstone/data_raw/
 
 # Mask Mandates
 
-This is [daily mask mandate data](U.S._State_and_Territorial_Public_Mask_Mandates_From_April_10__2020_through_August_15__2021_by_County_by_Day) So we need to summarize to monthly. 
+This is [daily mask mandate data](https://data.cdc.gov/Policy-Surveillance/U-S-State-and-Territorial-Public-Mask-Mandates-Fro/62d6-pm5i/about_data) So we need to summarize to monthly. 
 
 Note that it is too large to push to github, so it must be read from a local path.
 
