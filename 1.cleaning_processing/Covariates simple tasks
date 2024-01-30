@@ -9,20 +9,32 @@ library(stringr)
 setwd("C:/Users/User/OneDrive/Desktop/New folder/NYU Classes/Quantitative Capstone/Covariates/2018")
 dir()
 
-AgeSex <- read.csv("ACSST5Y2018.S0101_Age and Sex Estimates 2018_5Yr Estimates-Data.csv")  
+AgeSex <- read.csv("ACSST5Y2018.S0101_Age and Sex Estimates 2018_5Yr Estimates-Data_row2deleted.csv",stringsAsFactors=TRUE)
+View(AgeSex)
+
 Income <- read.csv("ACSST5Y2018.S1903-Data_Median Income Only_2018_5 Yr estimates.csv")  
+
 
 print(AgeSex)
 print(Income)
 
+
+
 # Split name column into firstname and last name
 AgeSex[c('First Name', 'Last Name','State')] <- str_split_fixed(AgeSex$NAME, ' ', 3)
+
+
+# How to rearrange columns now??
+#there's a website that suggested sth like this
 # Rearrange columns and remove original name column
 df <- AgeSex[c('First Name', 'Last Name', 'State')]
-
 print(" Data frame after splitting: ")
 df
 
+
+#anyway, back to data
+df2<-(AgeSex$S0101_C02_034E)
+class(df2)
 
 Working with Missing Data
 
