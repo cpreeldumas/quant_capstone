@@ -39,6 +39,10 @@ This is a first pass at using the CS-DID package. Next steps include:
 3. Testing whether seasonality poses a threat
 4. Confirming the parallel trends assumption
 
+# Methodology decisions
+
+1. Study period: January 2018 - April 2023 (expiration of MA moratorium)
+
 # Note on Covariates
 
 * The did package requires that covariates be time-invariant. For time varying covariates, the did package sets the value of the covariate to be equal to the value of the covariate in the “base period” where, 
@@ -59,8 +63,8 @@ bls_data %>%
 #prep dataset for CS-DID package
 bls_data_did <- bls_data %>% 
   mutate(idname = as.numeric(fips)) %>% 
-  # limiting dataset to April 2023 (expiration of MA moratorium)
-  filter(date <= "2023-04-01") %>% 
+  # limiting dataset to study period April 2023 (expiration of MA moratorium)
+  filter(date >= "2018-01-01" & date <= "2023-04-01") %>% 
   # making numeric version of data for DID package
   mutate(date_num = paste0(year, str_pad(month,
                                          width = 2,
