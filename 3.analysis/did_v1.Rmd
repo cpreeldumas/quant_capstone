@@ -15,10 +15,7 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-```
 
-
-```{r}
 # set up
 library(readr)
 library(lubridate)
@@ -31,6 +28,7 @@ library(naniar)
 bls_data <- read_csv("/Users/cpreeldumas/Documents/GitHub/quant_capstone/data_clean/BLS_county_employment_clean.csv") %>% 
   clean_names("snake") #convert column names to snake case
 ```
+
 
 # Initial Exploration Phase
 
@@ -48,8 +46,7 @@ This is a first pass at using the CS-DID package. Next steps include:
   * and in pre-treatment periods the base period is the period right before the current period. 
 
 # Prep data for CS-DID
-```{r}
-
+```{r, include = FALSE}
 #missingness
 miss_var_summary(bls_data)
 
