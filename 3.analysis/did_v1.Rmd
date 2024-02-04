@@ -1,8 +1,16 @@
 ---
 title: "DiD Initial Exploration"
 author: "Camille Preel-Dumas"
-date: "2024-01-22"
-output: html_document
+date: "Updated: `r format(Sys.time(), '%a, %b %d, %Y at %I:%M %p')`"
+output: 
+  html_document:
+    highlight: tango
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    number_sections: false
+    df_print: kable
+    code_folding: hide
 ---
 
 ```{r setup, include=FALSE}
@@ -16,13 +24,51 @@ library(readr)
 library(lubridate)
 library(tidyverse)
 library(janitor)
+library(did)
+library(naniar)
 
-
+#import data
 bls_data <- read_csv("/Users/cpreeldumas/Documents/GitHub/quant_capstone/data_clean/BLS_county_employment_clean.csv") %>% 
   clean_names("snake") #convert column names to snake case
+```
+
+# Initial Exploration Phase
+
+This is a first pass at using the CS-DID package. Next steps include:
+
+1. Adding covariates
+2. Adding anticipatory effects (if any)
+3. Testing whether seasonality poses a threat
+4. Confirming the parallel trends assumption
+
+# Note on Covariates
+
+* The did package requires that covariates be time-invariant. For time varying covariates, the did package sets the value of the covariate to be equal to the value of the covariate in the “base period” where, 
+  * in post-treatment periods the base period is the period immediately before observations in a particular group become treated (when there is anticipation, it is before anticipation effects start too), 
+  * and in pre-treatment periods the base period is the period right before the current period. 
+
+# Prep data for CS-DID
+```{r}
+
+#missingness
+miss_var_summary(bls_data)
+
+#why are these state missing state_start? 
+bls_data %>% 
+  filter(is.na(state_start)) %>% 
+  group_by(state) %>% 
+  tally()
 
 #prep dataset for CS-DID package
 bls_data_did <- bls_data %>% 
+  mutate(idname = as.numeric(fips)) %>% 
+  # limiting dataset to April 2023 (expiration of MA moratorium)
+  filter(date <= "2023-04-01") %>% 
+  # making numeric version of data for DID package
+  mutate(date_num = paste0(year, str_pad(month,
+                                         width = 2,
+                                         side = "left",
+                                         pad = "0"))) %>% 
   mutate(across(c(state_start, state_end, federal_start, federal_end), mdy)) %>% 
   #making a numeric version of dates for first treat column
   mutate(across(
@@ -42,6 +88,10 @@ bls_data_did %>%
   group_by(state, treatment, federal_end, state_end, first_treat) %>% 
   tally()
 
+bls_data_did %>% 
+  group_by(date, date_num) %>% 
+  tally() %>% 
+  arrange(date_num)
 ```
 
 # CS-DID
@@ -50,13 +100,31 @@ idname = fips
 tname = date
 yname = unemployment_rate
 gname = first_treat
-xformla = ~1
+xformla = ~1 
+
+### No covariates
+
+#### Group-time average treatment effects
 ```{r}
 attgt_nocovar <- att_gt(yname = "unemployment_rate",
                    gname = "first_treat",
-                   idname = "fips",
-                   tname = "date",
+                   idname = "idname",
+                   tname = "date_num",
                    xformla = ~1,
-                   data = bls_data)
+                   data = bls_data_did)
+
+summary(attgt_nocovar)
+ggdid(attgt_nocovar, ylim = c(-.3, .3))
 ```
 
+#### Aggregate 
+```{r}
+# aggregate the group-time average treatment effects
+attgt_nocovar_dyn <- aggte(attgt_nocovar, type = "dynamic")
+summary(attgt_nocovar_dyn)
+
+ggdid(attgt_nocovar_dyn, ylim = c(-.3, .3))
+```
+# Issues so far
+
+1. Large standard errors
