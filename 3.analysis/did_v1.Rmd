@@ -17,12 +17,14 @@ library(lubridate)
 library(tidyverse)
 library(janitor)
 
+
 bls_data <- read_csv("/Users/cpreeldumas/Documents/GitHub/quant_capstone/data_clean/BLS_county_employment_clean.csv") %>% 
   clean_names("snake") #convert column names to snake case
 
-#making a numeric version of dates for first treat column
+#prep dataset for CS-DID package
 bls_data_did <- bls_data %>% 
   mutate(across(c(state_start, state_end, federal_start, federal_end), mdy)) %>% 
+  #making a numeric version of dates for first treat column
   mutate(across(
     .cols = c(state_start, state_end, federal_start, federal_end), 
     .fns = ~ paste0(year(.x), str_pad(month(.x),
@@ -40,5 +42,21 @@ bls_data_did %>%
   group_by(state, treatment, federal_end, state_end, first_treat) %>% 
   tally()
 
+```
+
+# CS-DID
+
+idname = fips
+tname = date
+yname = unemployment_rate
+gname = first_treat
+xformla = ~1
+```{r}
+attgt_nocovar <- att_gt(yname = "unemployment_rate",
+                   gname = "first_treat",
+                   idname = "fips",
+                   tname = "date",
+                   xformla = ~1,
+                   data = bls_data)
 ```
 
