@@ -1,0 +1,24 @@
+
+install.packages("tidycensus")
+install.packages("tidyverse")
+library(tidycensus)
+library(tidyverse)
+
+census_api_key("d6995d87df335fc958097461151c236674041776", install = TRUE)
+readRenviron("~/.Renviron")`
+
+library(tidycensus)
+education20 <- get_acs(geography = "state", 
+                       variables = "S0102_C01_036E", 
+                       year = 2020,
+                       sumfile = "dhc")
+
+Trial1 <- get_acs(geography = c("county"),
+                       variables = c("S0102_C01_036E","S0102_C01_092E","S0102_C01_103E","S0102_C01_103E","S1903_C01_001E","S0101_C01_034E"), 
+                       year = 2014,
+                       sumfile = "dhc")
+
+head(Trial1)
+view(Trial1)
+
+
