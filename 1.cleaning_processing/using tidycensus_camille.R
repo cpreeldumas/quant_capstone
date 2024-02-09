@@ -4,7 +4,8 @@ install.packages("tidyverse")
 library(tidycensus)
 library(tidyverse)
 
-census_api_key("d6995d87df335fc958097461151c236674041776", install = TRUE)
+#camille's key
+census_api_key("659529984a3eb4e517097e92cef2977da836066e", install = TRUE)
 readRenviron("~/.Renviron")`
 
 library(tidycensus)
@@ -19,19 +20,27 @@ Trial1 <- get_acs(geography = c("county"),
                        sumfile = "dhc")
 
 #metadata: 
-S0102_C01_036E- Estimate!!Total!!EDUCATIONAL ATTAINMENT!!Population 25 years and over!!Some college or associate's degree
-S0102_C01_034E- Estimate!!Total!!EDUCATIONAL ATTAINMENT!!Population 25 years and over!!Less than high school graduate
-S0102_C01_092E- Estimate!!Total!!Occupied housing units!!HOUSING TENURE!!Renter-occupied housing units
-S0102_C01_103E- Estimate!!Total!!Renter-occupied housing units
-S0102_C01_106E- Estimate!!60 years and over!!Total population!!SEX AND AGE!!Median age (years)
-S1903_C01_001E- Estimate!!Number!!HOUSEHOLD INCOME BY RACE AND HISPANIC OR LATINO ORIGIN OF HOUSEHOLDER!!Households
-S0101_C01_034E- Estimate!!Total!!Total population!!SUMMARY INDICATORS!!Age dependency ratio
+# S0102_C01_036E- Estimate!!Total!!EDUCATIONAL ATTAINMENT!!Population 25 years and over!!Some college or associate's degree
+# S0102_C01_034E- Estimate!!Total!!EDUCATIONAL ATTAINMENT!!Population 25 years and over!!Less than high school graduate
+# S0102_C01_092E- Estimate!!Total!!Occupied housing units!!HOUSING TENURE!!Renter-occupied housing units
+# S0102_C01_103E- Estimate!!Total!!Renter-occupied housing units
+# S0102_C01_106E- Estimate!!60 years and over!!Total population!!SEX AND AGE!!Median age (years)
+# S1903_C01_001E- Estimate!!Number!!HOUSEHOLD INCOME BY RACE AND HISPANIC OR LATINO ORIGIN OF HOUSEHOLDER!!Households
+# S0101_C01_034E- Estimate!!Total!!Total population!!SUMMARY INDICATORS!!Age dependency ratio
 
+#new education variable: B06009_005, Estimate!!Total:!!Bachelor's degree
 
-
+v20 <- load_variables(2020, "acs5", cache = TRUE)
 
 covariate_data <- get_acs(geography = c("county"),
-                       variables = c(Above_college="S0102_C01_036E",Below_highschool="S0102_C01_034E",Renter_occupied_units_occupied="S0102_C01_092E",Renter_occupied_units_total="S0102_C01_103E",Median_age="S0102_C01_106E",Household_income="S1903_C01_001E",Age_dependency_ratio="S0101_C01_034E",Total_population="S0102_C01_001E"), 
+                       variables = c(Above_college="S0102_C01_036E",
+                                     Below_highschool="S0102_C01_034E",
+                                     Renter_occupied_units_occupied="S0102_C01_092E",
+                                     Renter_occupied_units_total="S0102_C01_103E",
+                                     Median_age="S0102_C01_106E",
+                                     Household_income="S1903_C01_001E",
+                                     Age_dependency_ratio="S0101_C01_034E",
+                                     Total_population="S0102_C01_001E"), 
                        year = 2020,
                        sumfile = "dhc")
 head(covariate_data)
