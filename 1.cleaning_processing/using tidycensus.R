@@ -1,0 +1,59 @@
+
+install.packages("tidycensus")
+install.packages("tidyverse")
+library(tidycensus)
+library(tidyverse)
+
+census_api_key("d6995d87df335fc958097461151c236674041776", install = TRUE)
+readRenviron("~/.Renviron")`
+
+library(tidycensus)
+education20 <- get_acs(geography = "state", 
+                       variables = "S0102_C01_036E", 
+                       year = 2020,
+                       sumfile = "dhc")
+
+Trial1 <- get_acs(geography = c("county"),
+                       variables = c("S0102_C01_036E","S0102_C01_092E","S0102_C01_103E","S0102_C01_106E","S1903_C01_001E","S0101_C01_034E"), 
+                       year = 2020,
+                       sumfile = "dhc")
+
+#metadata: 
+S0102_C01_036E- Estimate!!Total!!EDUCATIONAL ATTAINMENT!!Population 25 years and over!!Some college or associate's degree
+S0102_C01_034E- Estimate!!Total!!EDUCATIONAL ATTAINMENT!!Population 25 years and over!!Less than high school graduate
+S0102_C01_092E- Estimate!!Total!!Occupied housing units!!HOUSING TENURE!!Renter-occupied housing units
+S0102_C01_103E- Estimate!!Total!!Renter-occupied housing units
+S0102_C01_106E- Estimate!!60 years and over!!Total population!!SEX AND AGE!!Median age (years)
+S1903_C01_001E- Estimate!!Number!!HOUSEHOLD INCOME BY RACE AND HISPANIC OR LATINO ORIGIN OF HOUSEHOLDER!!Households
+S0101_C01_034E- Estimate!!Total!!Total population!!SUMMARY INDICATORS!!Age dependency ratio
+
+
+
+
+covariate_data <- get_acs(geography = c("county"),
+                       variables = c(Above_college="S0102_C01_036E",Below_highschool="S0102_C01_034E",Renter_occupied_units_occupied="S0102_C01_092E",Renter_occupied_units_total="S0102_C01_103E",Median_age="S0102_C01_106E",Household_income="S1903_C01_001E",Age_dependency_ratio="S0101_C01_034E",Total_population="S0102_C01_001E"), 
+                       year = 2020,
+                       sumfile = "dhc")
+head(covariate_data)
+
+#how to output after pivot wider: you just assign a name to it e.g.Trial3
+Trial4<-covariate_data %>% 
+  pivot_wider(
+    names_from = variable, 
+    values_from = estimate,
+    values_fill = 0
+  )
+
+
+#to check for completeness of counties but using r-marked down 
+
+covariate_data %>% 
+  group_by(NAME) %>% 
+  tally()
+
+Trial2<-covariate_data %>% 
+  group_by(NAME) %>% 
+  tally()
+view(trial2)
+
+
