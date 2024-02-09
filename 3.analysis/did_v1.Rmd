@@ -29,13 +29,12 @@ bls_data <- read_csv("/Users/cpreeldumas/Documents/GitHub/quant_capstone/data_cl
   clean_names("snake") #convert column names to snake case
 ```
 
-
 # Initial Exploration Phase
 
 This is a first pass at using the CS-DID package. Next steps include:
 
 1. Adding covariates
-2. Adding anticipatory effects (if any)
+2. Adding anticipatory effects (if any) - might need to test the other deadlines that got pushed (to test how solid the anticipation is). Fir ex: moratorium is initially set to expire in March, then it's pushed in February a few months, we should already be seeing effect in Jan and Feb.
 3. Testing whether seasonality poses a threat
 4. Confirming the parallel trends assumption
 
