@@ -15,10 +15,32 @@ education20 <- get_acs(geography = "state",
 
 Trial1 <- get_acs(geography = c("county"),
                        variables = c("S0102_C01_036E","S0102_C01_092E","S0102_C01_103E","S0102_C01_103E","S1903_C01_001E","S0101_C01_034E"), 
-                       year = 2014,
+                       year = 2020,
                        sumfile = "dhc")
+covariate_data <- get_acs(geography = c("county"),
+                       variables = c(educational_attainment="S0102_C01_036E",Renter_occupied_units1="S0102_C01_092E",Renter_occupied_units2="S0102_C01_103E",Median_age="S0102_C01_103E",Household_income="S1903_C01_001E",Age_dependency_ratio="S0101_C01_034E"), 
+                       year = 2020,
+                       sumfile = "dhc")
+head(covariate_data)
 
-head(Trial1)
-view(Trial1)
+#how to output after pivot wider: you just assign a name to it e.g.Trial3
+Trial3<-Trial1 %>% 
+  pivot_wider(
+    names_from = variable, 
+    values_from = estimate,
+    values_fill = 0
+  )
+
+
+#to check for completeness of counties but using r-marked down 
+
+covariate_data %>% 
+  group_by(NAME) %>% 
+  tally()
+
+Trial2<-covariate_data %>% 
+  group_by(NAME) %>% 
+  tally()
+view(trial2)
 
 
