@@ -86,4 +86,8 @@ Trial2<-covariate_data %>%
   tally()
 view(trial2)
 
+setwd("C:/Users/User/OneDrive/Desktop/New folder/NYU Classes/Quantitative Capstone/Covariates/2020")
+library(readr)
+write_csv(covariate_data2, 'output 13 Feb')
+
 
