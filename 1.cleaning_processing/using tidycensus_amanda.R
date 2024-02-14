@@ -90,4 +90,21 @@ setwd("C:/Users/User/OneDrive/Desktop/New folder/NYU Classes/Quantitative Capsto
 library(readr)
 write_csv(covariate_data2, 'output 13 Feb')
 
+# to prepare Median Income data for merging 
+
+Median_Income <- get_acs(geography = c("county"),
+                         variables = c(Median_income="B01002_001"), 
+                         year = 2020,
+                         sumfile = "dhc")
+
+Median_Income$moe<- NULL
+
+Median_Income2<-Median_Income %>% 
+  pivot_wider(
+    names_from = variable, 
+    values_from = estimate,
+    values_fill = 0
+
+    
+
 
