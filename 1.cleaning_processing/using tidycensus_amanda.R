@@ -86,12 +86,9 @@ Trial2<-covariate_data %>%
   tally()
 view(trial2)
 
-setwd("C:/Users/User/OneDrive/Desktop/New folder/NYU Classes/Quantitative Capstone/Covariates/2020")
-library(readr)
-write_csv(covariate_data2, 'output 13 Feb')
+
 
 # to prepare Median Income data for merging 
-
 Median_Income <- get_acs(geography = c("county"),
                          variables = c(Median_income="B01002_001"), 
                          year = 2020,
@@ -105,6 +102,36 @@ Median_Income2<-Median_Income %>%
     values_from = estimate,
     values_fill = 0
 
+
+#how to check that all the 3221 counties in the covariate dataset is similar to the 3221 counties in the median income data set??
+#need to check that other join funtions than the below were not more accurate.  
+  covariates_joined<-full_join(
+  covariate_data2,
+  Median_Income2,
+  by = "GEOID",
+  copy = FALSE,
+  suffix = c(".covariate_data2", ".Median_Income2"),
+  keep = NULL)
+
+covariates_joined$NAME.Median_Income2<-NULL
+
+#prepare state population
+state_population <- get_acs(geography = c("state"),
+                          variables = c(Total_population="B01003_001"), 
+                          year = 2020,
+                          sumfile = "dhc")
+state_population$moe<- NULL
+
+state_population2<-state_population %>% 
+  pivot_wider(
+    names_from = variable, 
+    values_from = estimate,
+    values_fill = 0
+  )
+
+setwd("C:/Users/User/OneDrive/Desktop/New folder/NYU Classes/Quantitative Capstone/Covariates/2020")
+library(readr)
+write_csv(covariate_data2, 'output 13 Feb')
     
 
 
