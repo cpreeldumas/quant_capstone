@@ -115,6 +115,18 @@ Median_Income2<-Median_Income %>%
 
 covariates_joined$NAME.Median_Income2<-NULL
 
+#to check for completeness of counties but using r-marked down 
+library(tidyverse)
+covariate_data %>% 
+  group_by(NAME) %>% 
+  tally()
+
+library(tidyverse)
+Trial2<-covariate_data %>% 
+  group_by(NAME) %>% 
+  tally()
+view(trial2)
+    
 #prepare state population
 state_population <- get_acs(geography = c("state"),
                           variables = c(Total_population="B01003_001"), 
