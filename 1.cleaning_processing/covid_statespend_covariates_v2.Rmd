@@ -1,0 +1,61 @@
+---
+title: "covid_statespend_covariates_v2"
+author: "Denise Upton & Camille Preel-Dumas"
+date: "2024-02-16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE)
+
+# set up
+library(readr)
+library(readxl)
+library(lubridate)
+library(tidyverse)
+library(janitor)
+library(DT)
+```
+
+## State Spending
+
+* Housing, Health, & Public Welfare spending as a fraction of total spending
+* Geolevel: state
+* Frequency: yearly
+* Source: [Urban Institute State Finance Data](https://state-local-finance-data.taxpolicycenter.org/pages.cfm)
+
+```{r}
+state_spending <- read_excel("/Users/cpreeldumas/Documents/GitHub/quant_capstone/data_raw/state_spending_urban.xlsx",
+                           range = "A3:E207") %>% 
+  clean_names("snake") %>%
+  filter(state != "United States") %>% 
+  left_join(read_excel("/Users/cpreeldumas/Documents/GitHub/quant_capstone/data_raw/state_abbrev_crosswalk.xlsx"),
+            by = "state") %>% 
+  rename(state_full = state,
+         state = postal) %>% 
+  mutate(state_fips = str_pad(as.character(state_fips), width = 2, side = "left", pad = "0"))
+
+head(state_spending) %>% datatable()
+```
+
+## COVID-19 Incidence
+
+* Count of COVID-19 infections per 100,000
+* Geolevel: county
+* Frequency: monthly
+* Source: [x](x)
+
+```{r}
+
+```
+
+## Mask Mandates
+
+* Start and end date for mark mandates
+* Geolevel: county
+* Frequency: monthly
+* Source: [x](x)
+
+```{r}
+
+```
