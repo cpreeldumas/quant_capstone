@@ -15,6 +15,8 @@ library(lubridate)
 library(tidyverse)
 library(janitor)
 library(DT)
+
+setwd("~/Documents/Coding Projects/quant_capstone")
 ```
 
 ## State Spending
@@ -38,7 +40,7 @@ state_spending <- read_excel("/Users/cpreeldumas/Documents/GitHub/quant_capstone
 head(state_spending) %>% datatable()
 ```
 
-## COVID-19 Incidence
+## COVID-19 Incidence Rate
 
 * Count of COVID-19 infections per 100,000
 * Geolevel: county
@@ -47,7 +49,26 @@ head(state_spending) %>% datatable()
 
 ```{r}
 
+#read county-level
+county_covid_rates <- read_csv("~/Google Drive/My Drive/_Wagner/2024-01/Capstone/Data/Weekly_COVID-19_County_Level_of_Community_Transmission_Historical_Changes_-_ARCHIVED_20240213.csv") %>% 
+  clean_names("snake")
+
+#sort by date to see earliest
+county_covid_rates %>% 
+  mutate(date = mdy(date)) %>% 
+  group_by(date) %>% 
+  tally() %>% 
+  arrange(date) %>% 
+  datatable()
+
+#take average for each month (data includes 3 rates per month) and list at mm 01 yyyy
+#???best format for date???
+
+
+
 ```
+
+* convert  
 
 ## Mask Mandates
 
