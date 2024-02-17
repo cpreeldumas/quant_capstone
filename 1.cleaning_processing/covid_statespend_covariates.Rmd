@@ -1,8 +1,11 @@
 ---
 title: "COVID and State Gov Covariates"
 author: "Camille Preel-Dumas"
-date: "Updated: `r format(Sys.time(), '%a, %b %d, %Y at %I:%M %p')`"
-output: 
+date: 'Updated: `r format(Sys.time(), ''%a, %b %d, %Y at %I:%M %p'')`'
+output:
+  pdf_document:
+    toc: true
+    toc_depth: '3'
   html_document:
     highlight: tango
     toc: true
@@ -55,12 +58,14 @@ head(state_spending) %>% datatable()
 <br> 
 
 # Covid Cases
-Issues:
 
+Issues:
 1. [County-level case data](https://data.cdc.gov/Public-Health-Surveillance/Weekly-COVID-19-County-Level-of-Community-Transmis/dt66-w6m6/about_data) start in 2022 even though the dataset page says the timeline is 2020-01-22/2023-05-10 ?
 2. I did find [state-level cases](https://data.cdc.gov/Case-Surveillance/Weekly-United-States-COVID-19-Cases-and-Deaths-by-/pwn4-m3yp/about_data) going back to 2020, if we're fine to proceed with state-level only
 
-#### County-level Cases:
+https://data.cdc.gov/Public-Health-Surveillance/Weekly-COVID-19-County-Level-of-Community-Transmis/jgk8-6dpn/about_data
+
+#### County-level Cases #1:
 ```{r}
 
 #read county-level
@@ -76,6 +81,21 @@ county_covid_cases %>%
   datatable()
 ```
 
+#### County-level Cases #2:
+```{r}
+
+#read county-level
+county_covid_cases2 <- read_csv("~/Google Drive/My Drive/_Wagner/2024-01/Capstone/Data/Weekly_COVID-19_County_Level_of_Community_Transmission_Historical_Changes_-_ARCHIVED_20240213.csv") %>% 
+  clean_names("snake")
+
+#sort by report date to see earliest
+county_covid_cases2 %>% 
+  mutate(date = mdy(date)) %>% 
+  group_by(date) %>% 
+  tally() %>% 
+  arrange(date) %>% 
+  datatable()
+```
 <br> 
 
 #### State-level Cases:
@@ -105,6 +125,12 @@ deaths <- read_csv("/Users/cpreeldumas/Documents/GitHub/quant_capstone/data_raw/
   clean_names("snake")
 ```
 
+** Use total deaths (not just COVID)? **
+
+[Weekly Provisional Counts of Deaths by State and Select Causes, 2020-2023](https://data.cdc.gov/NCHS/Weekly-Provisional-Counts-of-Deaths-by-State-and-S/muzy-jte6/about_data)
+
+
+
 <br> 
 
 # Mask Mandates
@@ -112,6 +138,8 @@ deaths <- read_csv("/Users/cpreeldumas/Documents/GitHub/quant_capstone/data_raw/
 This is [daily mask mandate data](https://data.cdc.gov/Policy-Surveillance/U-S-State-and-Territorial-Public-Mask-Mandates-Fro/62d6-pm5i/about_data) So we need to summarize to monthly. 
 
 Note that it is too large to push to github, so it must be read from a local path.
+
+* columns with date, state, binary for whether order in place?, start date, end date
 
 ```{r}
 
@@ -137,6 +165,8 @@ News sources on lifts:
 * https://www.usatoday.com/storytelling/coronavirus-reopening-america-map/
 * https://abcnews.go.com/US/list-states-stay-home-order-lifts/story?id=70317035
 * https://www.nytimes.com/interactive/2020/us/coronavirus-stay-at-home-order.html
+
+[Daily data set with orders by county](https://data.cdc.gov/Policy-Surveillance/U-S-State-and-Territorial-Stay-At-Home-Orders-Marc/y2iy-8irm/about_data)
 
 ```{r}
 
