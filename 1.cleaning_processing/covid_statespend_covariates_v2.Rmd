@@ -45,13 +45,12 @@ head(state_spending) %>% datatable()
 * Count of COVID-19 infections per 100,000
 * Geolevel: county
 * Frequency: monthly
-* Source: [x](x)
+* Source: [CDC U.S. State and Territorial Public Mask Mandates From April 10, 2020 through July 20, 2021 by County by Day](https://data.cdc.gov/Public-Health-Surveillance/Weekly-COVID-19-County-Level-of-Community-Transmis/jgk8-6dpn/about_data)
 
 ```{r}
 
 #read county-level
-county_covid_rates <- read_csv("~/Google Drive/My Drive/_Wagner/2024-01/Capstone/Data/Weekly_COVID-19_County_Level_of_Community_Transmission_Historical_Changes_-_ARCHIVED_20240213.csv") %>% 
-  clean_names("snake")
+county_covid_rates <- read_csv("~/Google Drive/My Drive/_Wagner/2024-01/Capstone/Data/Weekly_COVID-19_County_Level_of_Community_Transmission_Historical_Changes_-_ARCHIVED_20240213.csv") %>%   clean_names("snake")
 
 #sort by date to see earliest
 county_covid_rates %>% 
@@ -61,8 +60,7 @@ county_covid_rates %>%
   arrange(date) %>% 
   datatable()
 
-#take average for each month (data includes 3 rates per month) and list at mm 01 yyyy
-#???best format for date???
+#take average for each month (data includes 3 rates per month) and list under mm/01/yy
 
 
 
@@ -75,7 +73,7 @@ county_covid_rates %>%
 * Start and end date for mark mandates
 * Geolevel: county
 * Frequency: monthly
-* Source: [x](x)
+* Source: [CDC U.S. State and Territorial Public Mask Mandates From April 10, 2020 through July 20, 2021 by County by Day](https://data.cdc.gov/Policy-Surveillance/U-S-State-and-Territorial-Public-Mask-Mandates-Fro/62d6-pm5i/about_data)
 
 ```{r}
 
