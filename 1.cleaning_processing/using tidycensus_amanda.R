@@ -1,10 +1,6 @@
 install.packages("tidycensus")
 install.packages("tidyverse")
 
-#camille added but not sure what this is:
-@@ -4,7 +4,8 @@ install.packages("tidyverse")
-library(tidycensus)
-library(tidyverse)
 
 census_api_key("d6995d87df335fc958097461151c236674041776", install = TRUE)
 readRenviron("~/.Renviron")`
@@ -23,11 +19,9 @@ Trial1 <- get_acs(geography = c("county"),
                        variables = c("S0102_C01_036E","S0102_C01_092E","S0102_C01_103E","S0102_C02_004E","S1903_C01_001E","S0101_C01_034E"), 
                        year = 2020,
                        sumfile = "dhc")
-#But camille prefered this?:
-@@ -19,19 +20,27 @@ Trial1 <- get_acs(geography = c("county"),
-                       sumfile = "dhc")
 
-#old metadata: 
+
+#old metadata (wrong ones coz I did not use code): 
 #S0102_C01_036E- Estimate!!Total!!EDUCATIONAL ATTAINMENT!!Population 25 years and over!!Some college or associate's degree
 #S0102_C01_034E- Estimate!!Total!!EDUCATIONAL ATTAINMENT!!Population 25 years and over!!Less than high school graduate
 #S0102_C01_092E- Estimate!!Total!!Occupied housing units!!HOUSING TENURE!!Renter-occupied housing units
@@ -43,19 +37,20 @@ v20 <- load_variables(2020, "acs5", cache = TRUE)
 #new metadata: 
 #B06009_005, Estimate!!Total:!!Bachelor's degree, PLACE OF BIRTH BY EDUCATIONAL ATTAINMENT IN THE UNITED STATES, tract
 #B06009_002, Estimate!!Total:!!Less than high school graduate, PLACE OF BIRTH BY EDUCATIONAL ATTAINMENT IN THE UNITED STATES, tract
+#B06009_003, Estimate!!Total:!!High school graduate (includes equivalency), PLACE OF BIRTH BY EDUCATIONAL ATTAINMENT IN THE UNITED STATES, tract
 #B25008_003, Estimate!!Total:!!Renter occupied, TOTAL POPULATION IN OCCUPIED HOUSING UNITS BY TENURE, block group
-#B01002_001, 	Estimate!!Median age --!!Total: MEDIAN AGE BY SEX, block group
+#B01002_001,Estimate!!Median age --!!Total: MEDIAN AGE BY SEX, block group
+#B06011_001, Estimate!!Median income in the past 12 months --!!Total:MEDIAN INCOME IN THE PAST 12 MONTHS (IN 2020 INFLATION ADJUSTED DOLLARS)BYPLACE OF BIRTH IN THE UNITED STATES; tract
 #B07411_002, Estimate!!Median income in the past 12 months --!!Total living in area 1 year ago:!!Same house, MEDIAN INCOME IN THE PAST 12 MONTHS (IN 2020 INFLATION-ADJUSTED DOLLARS) BY GEOGRAPHICAL MOBILITY IN THE PAST YEAR FOR RESIDENCE 1 YEAR AGO IN THE UNITED STATES
 #B01003_001, Estimate!!Total, TOTAL POPULATION, block group
-
-#B01001_001, Estimate!!Total: SEX BY AGE, block group
+#Another population measure= B01001_001, Estimate!!Total: SEX BY AGE, block group 
 
 #more on age from Denise 6 Feb   
 #maybe should change those "block groups" in the end to be counties??
 
 library(tidycensus)
 covariate_data <- get_acs(geography = c("county"),
-                       variables = c(Bachelors="B06009_005",Below_highschool="B06009_002",Renter_occupied="B25008_003",Median_age="B01002_001",Median_income="B01002_001",Total_population="B01003_001"), 
+                       variables = c(Bachelors="B06009_005",Below_highschool="B06009_002",Renter_occupied="B25008_003",Median_age="B01002_001",Median_income="B06011_001",Total_population="B01003_001"), 
                        year = 2020,
                        sumfile = "dhc")
 head(covariate_data)
@@ -127,7 +122,8 @@ Trial2<-covariate_data %>%
   tally()
 view(trial2)
     
-#prepare state population
+
+#get_acs for state level population then merge 
 state_population <- get_acs(geography = c("state"),
                           variables = c(Total_population="B01003_001"), 
                           year = 2020,
@@ -140,6 +136,32 @@ state_population2<-state_population %>%
     values_from = estimate,
     values_fill = 0
   )
+
+#correct error in median income variable number and others added in:
+covariate_data <- get_acs(geography = c("county"),
+                          variables = c(Bachelors="B06009_005",Below_highschool="B06009_002",Highschool_graduate="B06009_003",Renter_occupied="B25008_003",Median_age="B01002_001",Median_income="B06011_001",Total_population="B01003_001"), 
+                          year = 2020,
+                          sumfile = "dhc")
+
+  covariate_data$moe<- NULL
+  covariate_data2<-covariate_data %>% 
+  pivot_wider(
+    names_from = variable, 
+    values_from = estimate,
+    values_fill = 0
+  )
+# Create percentages:
+covariate_data2$Renters_occupied_percentage <- covariate_data2$Renter_occupied/ covariate_data2$Total_population*100
+covariate_data2$Bachelors_percentage <- covariate_data2$Bachelors/ covariate_data2$Total_population*100
+covariate_data2$Highschool_graduate_percentage <- covariate_data2$Highschool_graduate/ covariate_data2$Total_population*100
+covariate_data2$Below_highschool_percentage <- covariate_data2$Below_highschool/ covariate_data2$Total_population*100
+
+
+
+# why wouldn't above high school + below high school = 100%??
+covariate_data2$EDUC_PERCENT_SUM<-rowSums(covariate_data2[12:13])
+    #actually the percentage of at high school graduates seems so low!
+
 
 setwd("C:/Users/User/OneDrive/Desktop/New folder/NYU Classes/Quantitative Capstone/Covariates/2020")
 library(readr)
