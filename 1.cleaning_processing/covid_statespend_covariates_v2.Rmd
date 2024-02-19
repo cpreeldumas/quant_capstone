@@ -48,19 +48,27 @@ head(state_spending) %>% datatable()
 ```{r}
 
 #read county-level data
-county_covid_rates <- read_csv("~/Google Drive/My Drive/_Wagner/2024-01/Capstone/Data/Weekly_COVID-19_County_Level_of_Community_Transmission_Historical_Changes_-_ARCHIVED_20240213.csv") %>%   clean_names("snake")
+county_covid_rates <- read_csv("~/Google Drive/My Drive/_Wagner/2024-01/Capstone/Data/Weekly_COVID-19_County_Level_of_Community_Transmission_Historical_Changes_-_ARCHIVED_20240213.csv") %>%
+  clean_names("snake") %>%
+  rename("covid_case_rate" = "cases_per_100k_7_day_count_change") %>% 
+  mutate(date = as.Date(date, format = '%m/%d/%Y'))
+
 
 #sort by date to see earliest
-county_covid_rates %>% 
-  mutate(date = mdy(date)) %>% 
+county_covid_rates %>%
   group_by(date) %>% 
   tally() %>% 
   arrange(date) %>% 
   datatable()
 
-#aggregate to month, year (average)
-county_mask_mandates %>%
-
+#aggregate to month-year average
+county_covid_rates %>%
+  arrange(date) %>% 
+  filter(date >= "2020-07-01") %>%
+  mutate(ym = format(date, '%Y-%m')) %>% 
+  group_by(ym, fips_code) %>% 
+  summarize(covid_case_rate = mean(covid_case_rate)) %>%
+  datatable()
 
 ```
 
@@ -89,7 +97,7 @@ county_mask_mandates %>%
   arrange(date) %>% 
   datatable()
 
-#aggregate data
+#aggregate data to month-year
 county_mask_mandates %>%
   mutate(masks_order_code = replace(masks_order_code, masks_order_code == 2, "0")) %>%
   filter(date >= "2020-07-01") %>%
@@ -97,4 +105,7 @@ county_mask_mandates %>%
   group_by(ym, fips_code) %>% 
   summarize(masks_order_code = max(masks_order_code)) %>% 
   datatable()
+
+#create new df with fips + percent of study period with mask mandate
+
 ```
