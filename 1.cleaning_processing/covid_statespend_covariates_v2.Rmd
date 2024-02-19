@@ -1,6 +1,6 @@
 ---
 title: "covid_statespend_covariates_v2"
-author: "Denise Upton & Camille Preel-Dumas"
+author: "Denise Upton"
 date: "2024-02-16"
 output: html_document
 ---
@@ -25,7 +25,15 @@ library(DT)
 * Source: [Urban Institute State Finance Data](https://state-local-finance-data.taxpolicycenter.org/pages.cfm)
 
 ```{r}
-state_spending <- read_excel("quant_capstone/data_raw/state_spending_urban.xlsx)
+state_spending <- read_excel("/quant_capstone/data_raw/state_spending_urban.xlsx",
+                           range = "A3:E207") %>% 
+  clean_names("snake") %>%
+  filter(state != "United States") %>% 
+  left_join(read_excel("/quant_capstone/data_raw/state_abbrev_crosswalk.xlsx"),
+            by = "state") %>% 
+  rename(state_full = state,
+         state = postal) %>% 
+  mutate(state_fips = str_pad(as.character(state_fips), width = 2, side = "left", pad = "0"))
 
 head(state_spending) %>% datatable()
 ```
@@ -39,7 +47,7 @@ head(state_spending) %>% datatable()
 
 ```{r}
 
-#read county-level
+#read county-level data
 county_covid_rates <- read_csv("~/Google Drive/My Drive/_Wagner/2024-01/Capstone/Data/Weekly_COVID-19_County_Level_of_Community_Transmission_Historical_Changes_-_ARCHIVED_20240213.csv") %>%   clean_names("snake")
 
 #sort by date to see earliest
@@ -50,8 +58,8 @@ county_covid_rates %>%
   arrange(date) %>% 
   datatable()
 
-#take average for each month (data includes 3 rates per month) and list under mm/01/yy
-
+#aggregate to month, year (average)
+county_mask_mandates %>%
 
 
 ```
@@ -70,28 +78,23 @@ make no=0
 sum yes/# dates over study period (07/01/2020+)
 
 ```{r}
-#read county-level
+#read county-level data
 county_mask_mandates <- read_csv("~/Google Drive/My Drive/_Wagner/2024-01/Capstone/Data/U.S._State_and_Territorial_Public_Mask_Mandates_From_April_10__2020_through_July_20__2021_by_County_by_Day_20240217.csv") %>%
   clean_names("snake")
 
 #sort by date to see earliest
-county_mask_mandates %>% 
+county_mask_mandates %>%
   group_by(date) %>% 
   tally() %>% 
   arrange(date) %>% 
   datatable()
 
-#change mask_order_code to 0 if no policy in place
+#aggregate data
 county_mask_mandates %>%
-  mutate(masks_order_code = replace(masks_order_code, masks_order_code == 2, 0))
-
-#create one row per FIPS with pct_mask_mandate over study period
-county_mask_mandates %>% 
-  group_by(fips_code, masks_order_code) %>%
-  tally() %>% 
-  arrange(masks_order_code) %>% 
+  mutate(masks_order_code = replace(masks_order_code, masks_order_code == 2, "0")) %>%
+  filter(date >= "2020-07-01") %>%
+  mutate(ym = format(date, '%Y-%m')) %>% 
+  group_by(ym, fips_code) %>% 
+  summarize(masks_order_code = max(masks_order_code)) %>% 
   datatable()
-
-
-
 ```
