@@ -95,6 +95,7 @@ county_covid_cases2 %>%
   tally() %>% 
   arrange(date) %>% 
   datatable()
+
 ```
 <br> 
 
