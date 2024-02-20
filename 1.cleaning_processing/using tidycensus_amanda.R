@@ -203,6 +203,30 @@ covariate_data2$Some_other_race_alone<- NULL
 covariate_data2$Two_or_more_races<- NULL
 covariate_data2$White_alone_not_hispanic_or_latino<- NULL
 
+# seperate function on GEOID
+library(tidyverse)
+
+covariate_data3<- separate(
+  data= covariate_data2,
+  col= "GEOID",
+  into= c("GEOID", "GEOID2"),
+  sep = +2,
+  remove = TRUE,
+  convert = FALSE,
+  extra = "warn",
+  fill = "warn",
+)
+
+covariates_joined<-full_join(
+  covariate_data3,
+  state_population2,
+  by = "GEOID",
+  copy = FALSE,
+  suffix = c(". Country_Covariate_Data3", ". State_Population2"),
+  keep = NULL)
+
+covariates_joined$EDUC_PERCENT_SUM<-NULL
+covariates_joined$RACE_PERCENT_SUM<-NULL
 
 
 # why wouldn't above high school + below high school = 100%?? 
