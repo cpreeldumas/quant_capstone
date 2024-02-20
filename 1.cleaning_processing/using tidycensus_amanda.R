@@ -205,8 +205,9 @@ covariate_data2$White_alone_not_hispanic_or_latino<- NULL
 
 
 
-# why wouldn't above high school + below high school = 100%??
-covariate_data2$EDUC_PERCENT_SUM<-rowSums(covariate_data2[12:13])
+# why wouldn't above high school + below high school = 100%?? 
+covariate_data2$EDUC_PERCENT_SUM<-rowSums(covariate_data2[8:9])
+covariate_data2$RACE_PERCENT_SUM<-rowSums(covariate_data2[10:18])
     #actually the percentage of at high school graduates seems so low!
 
 
