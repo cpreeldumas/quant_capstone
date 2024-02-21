@@ -8,30 +8,6 @@ readRenviron("~/.Renviron")`
 
 
 
-library(tidycensus)
-education20 <- get_acs(geography = "state", 
-                       variables = "B06009_005", 
-                       year = 2020,
-                       sumfile = "dhc")
-
-library(tidycensus)
-Trial1 <- get_acs(geography = c("county"),
-                       variables = c("S0102_C01_036E","S0102_C01_092E","S0102_C01_103E","S0102_C02_004E","S1903_C01_001E","S0101_C01_034E"), 
-                       year = 2020,
-                       sumfile = "dhc")
-
-
-#old metadata (wrong ones coz I did not use code): 
-#S0102_C01_036E- Estimate!!Total!!EDUCATIONAL ATTAINMENT!!Population 25 years and over!!Some college or associate's degree
-#S0102_C01_034E- Estimate!!Total!!EDUCATIONAL ATTAINMENT!!Population 25 years and over!!Less than high school graduate
-#S0102_C01_092E- Estimate!!Total!!Occupied housing units!!HOUSING TENURE!!Renter-occupied housing units
-#S0102_C01_103E- Estimate!!Total!!Renter-occupied housing units
-#S0102_C02_004E- Estimate!!60 years and over!!Total population!!SEX AND AGE!!Median age (years)
-#S1903_C01_001E- Estimate!!Number!!HOUSEHOLD INCOME BY RACE AND HISPANIC OR LATINO ORIGIN OF HOUSEHOLDER!!Households
-#S0101_C01_034E- Estimate!!Total!!Total population!!SUMMARY INDICATORS!!Age dependency ratio
-
-
-
 v20 <- load_variables(2020, "acs5", cache = TRUE)
 
 #new metadata: 
@@ -55,98 +31,8 @@ v20 <- load_variables(2020, "acs5", cache = TRUE)
 #Another population measure= B01001_001, Estimate!!Total: SEX BY AGE, block group 
 
 #more on age from Denise 6 Feb   
-#maybe should change those "block groups" in the end to be counties??
-
-library(tidycensus)
-covariate_data <- get_acs(geography = c("county"),
-                       variables = c(Bachelors="B06009_005",Below_highschool="B06009_002",Renter_occupied="B25008_003",Median_age="B01002_001",Median_income="B06011_001",Total_population="B01003_001"), 
-                       year = 2020,
-                       sumfile = "dhc")
-head(covariate_data)
-
-#remove moe column
-covariate_data$moe<- NULL
 
 
-#how to output after pivot wider: you just assign a name to it e.g.covariate_data2
-library(tidyverse)
-covariate_data2<-covariate_data %>% 
-  pivot_wider(
-    names_from = variable, 
-    values_from = estimate,
-    values_fill = 0
-  )
-
-
-#to check for completeness of counties but using r-marked down 
-library(tidyverse)
-covariate_data %>% 
-  group_by(NAME) %>% 
-  tally()
-
-library(tidyverse)
-Trial2<-covariate_data %>% 
-  group_by(NAME) %>% 
-  tally()
-view(trial2)
-
-
-
-# to prepare Median Income data for merging 
-Median_Income <- get_acs(geography = c("county"),
-                         variables = c(Median_income="B01002_001"), 
-                         year = 2020,
-                         sumfile = "dhc")
-
-Median_Income$moe<- NULL
-
-Median_Income2<-Median_Income %>% 
-  pivot_wider(
-    names_from = variable, 
-    values_from = estimate,
-    values_fill = 0
-
-
-#how to check that all the 3221 counties in the covariate dataset is similar to the 3221 counties in the median income data set??
-#need to check that other join funtions than the below were not more accurate.  
-  covariates_joined<-full_join(
-  covariate_data2,
-  Median_Income2,
-  by = "GEOID",
-  copy = FALSE,
-  suffix = c(".covariate_data2", ".Median_Income2"),
-  keep = NULL)
-
-covariates_joined$NAME.Median_Income2<-NULL
-
-#to check for completeness of counties but using r-marked down 
-library(tidyverse)
-covariate_data %>% 
-  group_by(NAME) %>% 
-  tally()
-
-library(tidyverse)
-Trial2<-covariate_data %>% 
-  group_by(NAME) %>% 
-  tally()
-view(trial2)
-    
-
-#get_acs for state level population then merge 
-state_population <- get_acs(geography = c("state"),
-                          variables = c(Total_population="B01003_001"), 
-                          year = 2020,
-                          sumfile = "dhc")
-state_population$moe<- NULL
-
-state_population2<-state_population %>% 
-  pivot_wider(
-    names_from = variable, 
-    values_from = estimate,
-    values_fill = 0
-  )
-
-#correct error in median income variable number and other variables added in:
 covariate_data <- get_acs(geography = c("county"),
                           variables = c(Bachelors="B06009_005",
                                         Below_highschool="B06009_002",
@@ -173,6 +59,11 @@ covariate_data <- get_acs(geography = c("county"),
     values_from = estimate,
     values_fill = 0
   )
+
+
+
+
+
 # Create percentages:
 covariate_data2$Renters_occupied_percentage <- covariate_data2$Renter_occupied/ covariate_data2$Total_population*100
 covariate_data2$Bachelors_percentage <- covariate_data2$Bachelors/ covariate_data2$Total_population*100
@@ -202,6 +93,22 @@ covariate_data2$Native_Hawaiian_and_other_Pacific_Island<- NULL
 covariate_data2$Some_other_race_alone<- NULL
 covariate_data2$Two_or_more_races<- NULL
 covariate_data2$White_alone_not_hispanic_or_latino<- NULL
+
+#get_acs for state level population then merge 
+state_population <- get_acs(geography = c("state"),
+                          variables = c(Total_population="B01003_001"), 
+                          year = 2020,
+                          sumfile = "dhc")
+state_population$moe<- NULL
+
+state_population2<-state_population %>% 
+  pivot_wider(
+    names_from = variable, 
+    values_from = estimate,
+    values_fill = 0
+  )
+
+
 
 # seperate function on GEOID
 library(tidyverse)
