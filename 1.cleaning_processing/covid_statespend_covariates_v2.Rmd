@@ -167,6 +167,6 @@ covariates4 <- full_join(covariates3, county_mask_mandates2, by = c("ym", "count
 covariates5 <- full_join(covariates4, county_mask_mandates3, by = c("county_fips", "state_fips"))
 covariates6 <- full_join(covariates5, county_mask_mandates4, by = c("county_fips", "state_fips"))
 
-
+write.csv(covariates6, "~/Documents/Coding Projects/quant_capstone/data_raw/covariates_covid_statespend_v1.csv", row.names=FALSE)
 
 ```
