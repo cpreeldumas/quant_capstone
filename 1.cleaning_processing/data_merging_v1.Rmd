@@ -20,32 +20,63 @@ library(DT)
 ## Load COVID and state spending data
 
 ```{r}
-covariates_covid_statespend <- read_csv("Documents/Coding Projects/quant_capstone/data_raw/covariates_covid_statespend_v1.csv")
+covariates_covid_statespend <- read_csv("~/Documents/Coding Projects/quant_capstone/data_raw/covariates_covid_statespend_v1.csv") %>%
+  arrange(state_fips) %>%
+  filter(state_fips<=56) %>%
+  rename(date=ym)
 
 ```
 
 ## Load labor force data
 
 ```{r}
-covariates_laborforce <- read_csv("Google Drive/My Drive/_Wagner/2024-01/Capstone/Data/county_laborforce.csv")
+covariates_laborforce <- read_csv("~/Google Drive/My Drive/_Wagner/2024-01/Capstone/Data/county_laborforce.csv") %>%
+  separate(fips, into = c("delete", "fips"), +9) %>%
+  separate(fips, into = c("state_fips", "county_fips"), +2) %>%
+  arrange(state_fips) %>%
+  filter(state_fips<=56)
+
 ```
 
 ## Load tidycensus data
 
 ```{r}
-covariates_census <- read_csv("Documents/Coding Projects/quant_capstone/data_raw/BLS_county_employment.csv")
+covariates_census <- read_csv("~/Documents/Coding Projects/quant_capstone/data_raw/covariates_census_v1.csv")
 
 ```
 
-## Combine data and export
+## Load BLS data
+
+```{r}
+BLS_data <- read_csv("~/Documents/Coding Projects/quant_capstone/data_clean/BLS_county_employment_clean.csv") %>%
+  mutate(date = format(date, '%Y-%m')) %>%
+  separate(FIPS, into = c("state_fips", "county_fips"), -3)
+
+```
+
+## Combine data
+
+```{r}
+
+data <- left_join(BLS_data, covariates_covid_statespend, by = c("date", "county_fips", "state_fips", "state"))
+data2 <- left_join(data, covariates_laborforce,  by = c("state_fips", "county_fips"))
+
+
+```
+
+## Test data
 
 ```{r}
 
 
-
-write.csv(BLS_county_employment_v4, "Documents/Coding Projects/quant_capstone/data_clean/data_v1.csv", row.names=FALSE)
-
 ```
 
+## Export data
+
+```{r}
+
+write.csv(data, "Documents/Coding Projects/quant_capstone/data_clean/data_v1.csv", row.names=FALSE)
+
+```
 
 
