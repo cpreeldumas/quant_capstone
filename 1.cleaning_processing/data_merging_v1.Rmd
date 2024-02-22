@@ -1,0 +1,51 @@
+---
+title: "data_merging_v1"
+author: "Denise Upton"
+date: "2024-02-22"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE)
+
+# set up
+library(readr)
+library(readxl)
+library(lubridate)
+library(tidyverse)
+library(janitor)
+library(DT)
+```
+
+## Load COVID and state spending data
+
+```{r}
+covariates_covid_statespend <- read_csv("Documents/Coding Projects/quant_capstone/data_raw/covariates_covid_statespend_v1.csv")
+
+```
+
+## Load labor force data
+
+```{r}
+covariates_laborforce <- read_csv("Google Drive/My Drive/_Wagner/2024-01/Capstone/Data/county_laborforce.csv")
+```
+
+## Load tidycensus data
+
+```{r}
+covariates_census <- read_csv("Documents/Coding Projects/quant_capstone/data_raw/BLS_county_employment.csv")
+
+```
+
+## Combine data and export
+
+```{r}
+
+
+
+write.csv(BLS_county_employment_v4, "Documents/Coding Projects/quant_capstone/data_clean/data_v1.csv", row.names=FALSE)
+
+```
+
+
+
