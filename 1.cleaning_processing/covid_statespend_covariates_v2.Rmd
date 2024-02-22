@@ -156,7 +156,7 @@ county_mask_mandates4 <-
 ```
 
 
-## Join variables
+## Join variables and export
 
 ```{r}
 
@@ -166,15 +166,6 @@ covariates3 <- full_join(covariates2, county_covid_rates4, by = c("county_fips",
 covariates4 <- full_join(covariates3, county_mask_mandates2, by = c("ym", "county_fips", "state_fips"))
 covariates5 <- full_join(covariates4, county_mask_mandates3, by = c("county_fips", "state_fips"))
 covariates6 <- full_join(covariates5, county_mask_mandates4, by = c("county_fips", "state_fips"))
-
-
-```
-
-
-## Merge into BLS data
-
-```{r}
-
 
 
 
