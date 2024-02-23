@@ -1,7 +1,10 @@
 install.packages("tidycensus")
 install.packages("tidyverse")
+library(tidycensus)
+library(tidycensus)
 
 
+#check if you might need a new census API key:
 census_api_key("d6995d87df335fc958097461151c236674041776", install = TRUE)
 readRenviron("~/.Renviron")`
 
@@ -132,8 +135,6 @@ covariates_joined<-full_join(
   suffix = c(". Country_Covariate_Data3", ". State_Population2"),
   keep = NULL)
 
-covariates_joined$EDUC_PERCENT_SUM<-NULL
-covariates_joined$RACE_PERCENT_SUM<-NULL
 
 
 # why wouldn't above high school + below high school = 100%?? 
@@ -141,10 +142,12 @@ covariate_data2$EDUC_PERCENT_SUM<-rowSums(covariate_data2[8:9])
 covariate_data2$RACE_PERCENT_SUM<-rowSums(covariate_data2[10:18])
     #actually the percentage of at high school graduates seems so low!
 
+covariates_joined$EDUC_PERCENT_SUM<-NULL
+covariates_joined$RACE_PERCENT_SUM<-NULL
 
 setwd("C:/Users/User/OneDrive/Desktop/New folder/NYU Classes/Quantitative Capstone/Covariates/2020")
 library(readr)
-write_csv(covariate_data2, 'output 13 Feb')
+write_csv(covariates_joined, 'covariates_census_v2')
     
 
 
