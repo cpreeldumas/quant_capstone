@@ -72,6 +72,8 @@ data3 <- left_join(data2, covariates_census,  by = c("state_fips", "county_fips"
 
 ```{r}
 
+data3 %>%
+  arrange(date, state_fips, county_fips)
 
 ```
 
@@ -79,7 +81,7 @@ data3 <- left_join(data2, covariates_census,  by = c("state_fips", "county_fips"
 
 ```{r}
 
-write.csv(data3, "Documents/Coding Projects/quant_capstone/data_clean/data_v1.csv", row.names=FALSE)
+write.csv(data3, "~/Documents/Coding Projects/quant_capstone/data_clean/data_v1.csv", row.names=FALSE)
 
 ```
 
