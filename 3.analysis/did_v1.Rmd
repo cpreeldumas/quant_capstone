@@ -97,6 +97,14 @@ bls_data_did %>%
 bls_data_did %>% 
   group_by(treatment, federal_end, state_end, first_treat) %>% 
   tally()
+
+# DC is a much smaller group, saving a version without
+bls_data_did %>% 
+  group_by(first_treat) %>% 
+  tally()
+
+bls_data_did_nodc <- bls_data_did %>% 
+  filter(state != "DC")
 ```
 
 # CS-DID
@@ -116,10 +124,10 @@ attgt_nocovar <- att_gt(yname = "unemployment_rate",
                    idname = "idname",
                    tname = "date_num",
                    xformla = ~1,
-                   data = bls_data_did)
+                   data = bls_data_did_nodc)
 
 summary(attgt_nocovar)
-ggdid(attgt_nocovar, ylim = c(-.3, .3))
+ggdid(attgt_nocovar, ylim = c(-.3, .3), xgap = 12)
 ```
 
 #### Aggregate 
@@ -128,7 +136,7 @@ ggdid(attgt_nocovar, ylim = c(-.3, .3))
 attgt_nocovar_dyn <- aggte(attgt_nocovar, type = "dynamic")
 summary(attgt_nocovar_dyn)
 
-ggdid(attgt_nocovar_dyn, ylim = c(-.3, .3))
+ggdid(attgt_nocovar_dyn, ylim = c(-.3, .3), xgap = 10)
 ```
 # Issues so far
 
