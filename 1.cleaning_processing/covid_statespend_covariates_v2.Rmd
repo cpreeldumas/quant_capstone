@@ -35,7 +35,11 @@ state_spending <- read_excel("~/Documents/Coding Projects/quant_capstone/data_ra
          state = postal) %>% 
   mutate(state_fips = str_pad(as.character(state_fips), width = 2, side = "left", pad = "0"))
 
-head(state_spending) %>% datatable()
+state_spending2 <-
+  state_spending %>%
+  rename(health_spending=e052_health_hosp_dir_exp, housing_spending=e074_hous_com_direct_exp, welfare_spending=e090_public_welf_direct_exp) %>%
+  group_by(state, state_fips) %>%
+  summarize(health_spending = mean(health_spending), housing_spending = mean(housing_spending), welfare_spending = mean(welfare_spending))
 ```
 
 ## COVID-19 Incidence Rate
@@ -68,18 +72,28 @@ county_covid_rates2 <-
   filter(date >= "2020-07-01") %>%
   mutate(ym = format(date, '%Y-%m')) %>% 
   group_by(ym, fips_code) %>% 
-  summarize(monthly_case_rate = mean(covid_case_rate))
+  summarize(monthly_covid_rate = mean(covid_case_rate)) %>% 
+  separate(fips_code, into = c("state_fips", "county_fips"), sep = +2)
 
 head(county_covid_rates2) %>% datatable()
-
 
 #average county rate across study period
 county_covid_rates3 <-
   county_covid_rates2 %>%
-  group_by(fips_code) %>%
-  summarize(study_average = mean(monthly_case_rate))
-  
+  group_by(state_fips, county_fips) %>%
+  summarize(study_covid_rate = mean(monthly_covid_rate))
+
 head(county_covid_rates3) %>% datatable()
+
+#average county rate across pre-treatment period
+county_covid_rates4 <-
+  county_covid_rates2 %>%
+  arrange(ym) %>% 
+  filter(ym <= "2021-09") %>%
+  group_by(state_fips, county_fips) %>%
+  summarize(pretreat_covid_rate = mean(monthly_covid_rate))
+
+head(county_covid_rates4) %>% datatable()
 
 ```
 
@@ -116,7 +130,9 @@ county_mask_mandates2 <-
   filter(date >= "2020-07-01") %>%
   mutate(ym = format(date, '%Y-%m')) %>% 
   group_by(ym, fips_code) %>% 
-  summarize(masks_order_code = max(masks_order_code))
+  summarize(masks_order_code = max(masks_order_code)) %>%
+  separate(fips_code, into = c("state_fips", "county_fips"), sep = +2)
+
 
 head(county_mask_mandates2) %>% datatable()
 
@@ -124,15 +140,33 @@ head(county_mask_mandates2) %>% datatable()
 county_mask_mandates3 <-
   county_mask_mandates2 %>%
   mutate(masks_order_code = as.numeric(masks_order_code)) %>%
-  group_by(fips_code) %>%
-  summarize(pct_mandate_active = mean(masks_order_code))
+  group_by(state_fips, county_fips) %>%
+  summarize(study_maskmandate_pct = mean(masks_order_code))
   
 head(county_mask_mandates3) %>% datatable()
+
+#percent of pre-treatment period with mask mandate
+county_mask_mandates4 <-
+  county_mask_mandates2 %>%
+  mutate(masks_order_code = as.numeric(masks_order_code)) %>%
+  filter(ym <= "2021-09") %>%
+  group_by(state_fips, county_fips) %>%
+  summarize(pretreat_maskmandate_pct = mean(masks_order_code))
+
 ```
 
 
-## Merge variables
+## Join variables and export
 
 ```{r}
+
+covariates1 <- full_join(state_spending2, county_covid_rates2, by = c("state_fips"))
+covariates2 <- full_join(covariates1, county_covid_rates3, by = c("county_fips", "state_fips"))
+covariates3 <- full_join(covariates2, county_covid_rates4, by = c("county_fips", "state_fips"))
+covariates4 <- full_join(covariates3, county_mask_mandates2, by = c("ym", "county_fips", "state_fips"))
+covariates5 <- full_join(covariates4, county_mask_mandates3, by = c("county_fips", "state_fips"))
+covariates6 <- full_join(covariates5, county_mask_mandates4, by = c("county_fips", "state_fips"))
+
+write.csv(covariates6, "~/Documents/Coding Projects/quant_capstone/data_raw/covariates_covid_statespend_v1.csv", row.names=FALSE)
 
 ```
