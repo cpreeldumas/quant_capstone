@@ -47,7 +47,7 @@ state_spending2 <-
 * Count of COVID-19 infections per 100,000
 * Geolevel: county
 * Frequency: monthly
-* Source: [CDC U.S. State and Territorial Public Mask Mandates From April 10, 2020 through July 20, 2021 by County by Day](https://data.cdc.gov/Public-Health-Surveillance/Weekly-COVID-19-County-Level-of-Community-Transmis/jgk8-6dpn/about_data)
+* Source: [CDC Weekly COVID-19 County Level of Community Transmission Historical Changes](https://data.cdc.gov/Public-Health-Surveillance/Weekly-COVID-19-County-Level-of-Community-Transmis/jgk8-6dpn/about_data)
 
 ```{r}
 
