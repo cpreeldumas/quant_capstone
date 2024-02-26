@@ -1,0 +1,30 @@
+---
+title: "descriptive_statistics_v2"
+author: "Denise Upton"
+date: "2024-02-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE)
+
+# set up
+library(readr)
+library(readxl)
+library(lubridate)
+library(tidyverse)
+library(janitor)
+library(DT)
+```
+
+## Read data
+
+```{r}
+data <- read_csv("~/Documents/Coding Projects/quant_capstone/data_clean/data_v1.csv")
+```
+
+##
+
+```{r}
+
+```
