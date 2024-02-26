@@ -73,8 +73,7 @@ data3 <- left_join(data2, covariates_census,  by = c("state_fips", "county_fips"
 ```{r}
 
 data3 %>%
-  arrange(date, state_fips, county_fips)
-
+  group_by(state_fips, county_fips)
 ```
 
 ## Export data
