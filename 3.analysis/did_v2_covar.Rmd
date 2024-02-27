@@ -1,0 +1,169 @@
+---
+title: "DiD Model w Covariates"
+author: "Camille Preel-Dumas"
+date: "Updated: `r format(Sys.time(), '%a, %b %d, %Y at %I:%M %p')`"
+output: 
+  html_document:
+    highlight: tango
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    number_sections: false
+    df_print: kable
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# set up
+library(readr)
+library(lubridate)
+library(tidyverse)
+library(janitor)
+library(did)
+library(naniar)
+library(zoo)
+
+#import data
+bls_data <- read_csv("/Users/cpreeldumas/Documents/GitHub/quant_capstone/data_clean/data_v1.csv") %>% 
+  clean_names("snake") #convert column names to snake case
+
+bls_data_old <- read_csv("/Users/cpreeldumas/Documents/GitHub/quant_capstone/data_clean/BLS_county_employment_clean.csv") %>% 
+  clean_names("snake") #convert column names to snake case
+
+glimpse(bls_data)
+```
+
+# Initial Exploration Phase
+
+This is a second pass at using the CS-DID package. Next steps include:
+
+1. Adding anticipatory effects (if any) - might need to test the other deadlines that got pushed (to test how solid the anticipation is). Fir ex: moratorium is initially set to expire in March, then it's pushed in February a few months, we should already be seeing effect in Jan and Feb.
+2. Testing whether seasonality poses a threat
+
+# Methodology decisions
+
+1. Study period: July 2020 - April 2023 (expiration of MA moratorium)
+
+# Note on Covariates
+
+* The did package requires that covariates be time-invariant. For time varying covariates, the did package sets the value of the covariate to be equal to the value of the covariate in the “base period” where, 
+  * in post-treatment periods the base period is the period immediately before observations in a particular group become treated (when there is anticipation, it is before anticipation effects start too), 
+  * and in pre-treatment periods the base period is the period right before the current period. 
+
+# Prep data for CS-DID
+```{r, include = FALSE}
+#missingness
+miss_var_summary(bls_data)
+
+#why are these state missing state_start? 
+bls_data %>% 
+  filter(is.na(state_start)) %>% 
+  group_by(state) %>% 
+  tally()
+
+bls_data %>% arrange(desc(date))
+
+#prep dataset for CS-DID package
+bls_data_did <- bls_data %>% 
+  mutate(idname = as.numeric(paste0(state_fips, county_fips)),
+         date = ym(date)) %>% 
+  # limiting dataset to July 2020 - April 2023 (expiration of MA moratorium)
+  filter(date >= "2020-07-01" & date <= "2023-04-01") %>% 
+  # making numeric version of data for DID package
+  mutate(new_year_mo = as.numeric(as.yearmon(date))) %>% 
+  mutate(across(c(state_start, state_end, federal_start, federal_end), mdy)) %>% 
+  #making a numeric version of dates for first treat column
+  mutate(across(
+    .cols = c(state_start, state_end, federal_start, federal_end), 
+    .fns = ~ as.numeric(as.yearmon(.x)),
+    .names = "{.col}_new_year_mo")) %>% 
+  mutate(first_treat = case_when(
+    state == "MA" ~ 0, #never-treated group
+    treatment == 1 ~ federal_end_new_year_mo,
+    treatment == 0 ~ state_end_new_year_mo)) 
+
+
+#dropping all NAs for now
+bls_data_did_nodc <- bls_data_did %>% 
+  filter(state != "DC" & state != "PR" & county != "Bailey County, Texas")
+```
+
+```{r, include = FALSE}
+# misc checks
+bls_data_did %>% 
+  group_by(state, treatment, federal_end, state_end, first_treat) %>% 
+  tally()
+
+bls_data_did %>% 
+  group_by(date, date_num) %>% 
+  tally() %>% 
+  arrange(date_num)
+
+# checking the coding of treatment v. control
+bls_data_did %>% 
+  group_by(treatment, federal_end, state_end, first_treat) %>% 
+  tally()
+
+# obs by group
+bls_data_did_nodc %>% 
+  group_by(first_treat) %>% 
+  tally()
+
+bls_data_did_nodc %>% 
+  filter(year == "2021") %>% 
+  ggplot(aes(x = unemployment_rate)) + geom_histogram()
+```
+
+
+# CS-DID
+
+idname = fips
+tname = date
+yname = unemployment_rate
+gname = first_treat
+xformla = ~1 
+
+## Covariates
+
+renters_occupied_percentage +
+                     black_or_african_american_percentage + 
+                     hispanic_or_latino_percentage +
+                     bachelors_percentage +
+                     median_age + 
+                     median_income + 
+                     laborforce_16over + 
+                     health_spending + 
+                     housing_spending + 
+                     welfare_spending + 
+                     pretreat_covid_rate + 
+                     pretreat_maskmandate_pct
+
+#### Group-time average treatment effects
+```{r}
+attgt_nocovar <- att_gt(yname = "unemployment_rate",
+                   gname = "first_treat",
+                   idname = "idname",
+                   tname = "new_year_mo",
+                   clustervars = "idname",
+                   allow_unbalanced_panel = TRUE,
+                   xformla = ~ 1,
+                   control_group = "notyettreated",
+                   data = bls_data_did_nodc)
+
+summary(attgt_nocovar)
+ggdid(attgt_nocovar, ylim = c(-3, 3), xlab = "Date", ylab = "ATT", xgap = 50)
+```
+
+#### Aggregate 
+```{r}
+# aggregate the group-time average treatment effects
+attgt_nocovar_dyn <- aggte(attgt_nocovar, type = "dynamic")
+summary(attgt_nocovar_dyn)
+
+ggdid(attgt_nocovar_dyn, ylim = c(-.3, .3), xgap = 10)
+```
+# Issues so far
+
+1. Large standard errors
