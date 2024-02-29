@@ -140,6 +140,27 @@ renters_occupied_percentage +
                      pretreat_covid_rate + 
                      pretreat_maskmandate_pct
 
+                     
+#### Conditional Pre-Test
+```{r, warning = FALSE, message = FALSE}
+pre_test <- conditional_did_pretest(yname = "unemployment_rate",
+                        tname= "new_year_mo",
+                        idname = "idname",
+                        gname = "first_treat",
+                        xformla = ~
+                          renters_occupied_percentage +
+                     black_or_african_american_percentage + 
+                     hispanic_or_latino_percentage +
+                     bachelors_percentage +
+                     median_age + 
+                     median_income + 
+                     laborforce_16over,
+                        data = bls_data_did_nodc,
+                        control_group = "notyettreated")
+```
+
+
+
 #### Group-time average treatment effects
 ```{r}
 attgt_nocovar <- att_gt(yname = "unemployment_rate",
