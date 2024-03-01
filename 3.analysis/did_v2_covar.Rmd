@@ -15,6 +15,7 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+options(scipen=999)
 
 # set up
 library(readr)
@@ -24,6 +25,7 @@ library(janitor)
 library(did)
 library(naniar)
 library(zoo)
+library(plm)
 
 #import data
 bls_data <- read_csv("/Users/cpreeldumas/Documents/GitHub/quant_capstone/data_clean/data_v1.csv") %>% 
@@ -158,6 +160,38 @@ pre_test <- conditional_did_pretest(yname = "unemployment_rate",
                         data = bls_data_did_nodc,
                         control_group = "notyettreated")
 ```
+### Event study pre-test
+```{r}
+bls_data_common_pre <- bls_data_did_nodc %>% 
+  filter(date < "2021-09-01") %>% 
+  mutate(treat_date_interact = treatment * new_year_mo)
+
+bls_data_common_pre %>% 
+  group_by(treatment) %>% tally()
+
+bls_data_common_pre %>% 
+  group_by(treatment, state) %>% tally()
+
+pre_testlm <- lm(unemployment_rate ~ treatment + new_year_mo + treat_date_interact + 
+                   total_population +
+                   renters_occupied_percentage +
+                   black_or_african_american_percentage + 
+                   hispanic_or_latino_percentage +
+                   bachelors_percentage +
+                   median_age + 
+                   median_income + 
+                   laborforce_16over, 
+                 data = bls_data_common_pre)
+
+summary(pre_testlm)
+
+pre_test <- plm(unemployment_rate ~ treatment,
+                data = bls_data_common_pre,
+                model = "within",
+                index = c("new_year_mo"))
+summary(pre_test)
+index(pre_test)
+```
 
 
 
@@ -169,7 +203,12 @@ attgt_nocovar <- att_gt(yname = "unemployment_rate",
                    tname = "new_year_mo",
                    clustervars = "idname",
                    allow_unbalanced_panel = TRUE,
-                   xformla = ~ 1,
+                   xformla = ~ renters_occupied_percentage +
+                     black_or_african_american_percentage + 
+                     hispanic_or_latino_percentage +
+                     bachelors_percentage +
+                     median_income + 
+                     laborforce_16over,
                    control_group = "notyettreated",
                    data = bls_data_did_nodc)
 
