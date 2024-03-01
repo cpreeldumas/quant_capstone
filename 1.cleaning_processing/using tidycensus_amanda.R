@@ -17,7 +17,7 @@ v20 <- load_variables(2020, "acs5", cache = TRUE)
 #B06009_005, Estimate!!Total:!!Bachelor's degree, PLACE OF BIRTH BY EDUCATIONAL ATTAINMENT IN THE UNITED STATES, tract
 #B06009_002, Estimate!!Total:!!Less than high school graduate, PLACE OF BIRTH BY EDUCATIONAL ATTAINMENT IN THE UNITED STATES, tract
 #B06009_003, Estimate!!Total:!!High school graduate (includes equivalency), PLACE OF BIRTH BY EDUCATIONAL ATTAINMENT IN THE UNITED STATES, tract
-#B25008_003, Estimate!!Total:!!Renter occupied, TOTAL POPULATION IN OCCUPIED HOUSING UNITS BY TENURE, block group
+
 #B01002_001,Estimate!!Median age --!!Total: MEDIAN AGE BY SEX, block group
 #B06011_001, Estimate!!Median income in the past 12 months --!!Total:MEDIAN INCOME IN THE PAST 12 MONTHS (IN 2020 INFLATION ADJUSTED DOLLARS)BYPLACE OF BIRTH IN THE UNITED STATES; tract
 #B07411_002, Estimate!!Median income in the past 12 months --!!Total living in area 1 year ago:!!Same house, MEDIAN INCOME IN THE PAST 12 MONTHS (IN 2020 INFLATION-ADJUSTED DOLLARS) BY GEOGRAPHICAL MOBILITY IN THE PAST YEAR FOR RESIDENCE 1 YEAR AGO IN THE UNITED STATES
@@ -31,6 +31,13 @@ v20 <- load_variables(2020, "acs5", cache = TRUE)
 #B01001F_001, Estimate!!Total:SEX BY AGE (SOME OTHER RACE ALONE), tract
 #B01001G_001, Estimate!!Total: SEX BY AGE (TWO OR MORE RACES), tract
 #B01001H_001, Estimate!!Total:SEX BY AGE (WHITE ALONE, NOT HISPANIC OR LATINO), tractWhite
+#B07013_002
+#B07013_003
+
+#Now exculding
+#B08537_002
+#B25008_003, Estimate!!Total:!!Renter occupied, TOTAL POPULATION IN OCCUPIED HOUSING UNITS BY TENURE, block group
+
 #Another population measure= B01001_001, Estimate!!Total: SEX BY AGE, block group 
 
 #more on age from Denise 6 Feb   
@@ -40,7 +47,8 @@ covariate_data <- get_acs(geography = c("county"),
                           variables = c(Bachelors="B06009_005",
                                         Below_highschool="B06009_002",
                                         Highschool_graduate="B06009_003",
-                                        Renter_occupied="B25008_003",
+                                        Renter_occupied="B07013_003",
+                                        Owner_occupied="B07013_002",
                                         Median_age="B01002_001",
                                         Median_income="B06011_001",
                                         Total_population="B01003_001", 
@@ -66,9 +74,10 @@ covariate_data <- get_acs(geography = c("county"),
 
 
 
+covariate_data2$Owners_plus_renters<-rowSums(covariate_data2[18:19])
 
-# Create percentages:
-covariate_data2$Renters_occupied_percentage <- covariate_data2$Renter_occupied/ covariate_data2$Total_population*100
+# Create fractions
+covariate_data2$Renters_occupied_percentage <- covariate_data2$Renter_occupied/ covariate_data2$Owners_plus_renters*100
 covariate_data2$Bachelors_percentage <- covariate_data2$Bachelors/ covariate_data2$Total_population*100
 covariate_data2$Highschool_graduate_percentage <- covariate_data2$Highschool_graduate/ covariate_data2$Total_population*100
 covariate_data2$Below_highschool_percentage <- covariate_data2$Below_highschool/ covariate_data2$Total_population*100
@@ -84,6 +93,8 @@ covariate_data2$White_alone_not_hispanic_or_latino_percentage<- covariate_data2$
 
 
 covariate_data2$Renter_occupied<- NULL
+covariate_data2$Owner_occupied<- NULL
+covariate_data2$Owners_plus_renters<- NULL
 covariate_data2$Bachelors<- NULL
 covariate_data2$Highschool_graduate<- NULL
 covariate_data2$Below_highschool<-NULL
@@ -147,7 +158,7 @@ covariates_joined$RACE_PERCENT_SUM<-NULL
 
 setwd("C:/Users/User/OneDrive/Desktop/New folder/NYU Classes/Quantitative Capstone/Covariates/2020")
 library(readr)
-write_csv(covariates_joined, 'covariates_census_v2')
+write_csv(covariates_joined, 'covariates_census_v5')
     
 
 

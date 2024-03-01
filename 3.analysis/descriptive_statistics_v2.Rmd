@@ -15,16 +15,83 @@ library(lubridate)
 library(tidyverse)
 library(janitor)
 library(DT)
+library(gt)
+library(stargazer)
+library(skimr)
+library(survey)
 ```
 
-## Read data
+## Load data
 
 ```{r}
-data <- read_csv("~/Documents/Coding Projects/quant_capstone/data_clean/data_v1.csv")
+data <- read_csv("~/Documents/Coding Projects/quant_capstone/data_clean/data_v1.csv") %>%
+  filter(date>="2020-07" & date<="2023-04") %>% # Study Period: July 2020 - April 2023
+  filter(state_fips <= "56" & state_fips != "11") %>% # Remove PR, Guam, Virgin Islands, DC
+  select(-"delete", -"county", -"NAME") %>%
+  group_by(treatment)
+
 ```
 
-##
+## Prep data for descriptive statistics
+
+* Pre-period: July 2020 to July 2021
+* Post-period: August 2021 to April 2023
 
 ```{r}
 
+data_pre <- data %>%
+  filter(date<="2021-07") %>%
+  group_by(treatment) %>%
+  summarize(states=length(unique(state_fips)),
+            counties=length(unique(county_fips)),
+            pct_renters=mean(Renters_occupied_percentage))
+  
+
+```
+
+
+## Descriptive statistics
+
+```{r}
+
+data_ds %>%
+  skim()
+  
+  
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+## Camille example code
+
+
+```{r}
+hvs21_hh_svy %>% 
+  group_by(policy) %>% 
+  summarize(across(starts_with("hh_"), ~ srvyr::survey_mean(.x, na.rm=T))) %>% 
+  select(-ends_with("se")) %>% 
+  transmute(policy, 
+            `% of HHs with senior` = hh_senior,
+            `% of HHs with child under 18` = hh_under18,
+            `% of HHs with child under 6` = hh_under6,
+            `% of HHs receiving food assist` = hh_pa_food,
+            `% of HHs receiving cash assist` = hh_pa_cash,
+            `% of HHs receiving rental assist` = hh_rent_assist, 
+            `% of HHs receiving other assist` = hh_pa_other,
+            `Mean HH Income` = hh_inc) %>% 
+  datatable() %>% 
+  formatPercentage(2:8, 
+                   digits = 1) %>% 
+    formatCurrency("Mean HH Income", 
+                 digits = 0)
 ```
