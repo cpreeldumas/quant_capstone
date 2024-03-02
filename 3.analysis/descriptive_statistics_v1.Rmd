@@ -48,6 +48,12 @@ with(BLS_county_employment_clean,
 # Descriptive Statistics
 
 str(BLS_county_employment_clean)
+```{r}
+```
+
+
+```{r}
+```
 
 
 ## Number of states
