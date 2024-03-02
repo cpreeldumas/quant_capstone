@@ -26,12 +26,15 @@ library(did)
 library(naniar)
 library(zoo)
 library(plm)
+library(DT)
+library(broom)
+library(scales)
+library(gtools)
+library(stargazer)
+library(sjPlot)
 
 #import data
-bls_data <- read_csv("/Users/cpreeldumas/Documents/GitHub/quant_capstone/data_clean/data_v1.csv") %>% 
-  clean_names("snake") #convert column names to snake case
-
-bls_data_old <- read_csv("/Users/cpreeldumas/Documents/GitHub/quant_capstone/data_clean/BLS_county_employment_clean.csv") %>% 
+bls_data <- read_csv("/Users/cpreeldumas/Documents/GitHub/quant_capstone/data_clean/data_v2.csv") %>% 
   clean_names("snake") #convert column names to snake case
 
 glimpse(bls_data)
@@ -47,6 +50,7 @@ This is a second pass at using the CS-DID package. Next steps include:
 # Methodology decisions
 
 1. Study period: July 2020 - April 2023 (expiration of MA moratorium)
+2. Dropping DC, PR, and 1 Texas County
 
 # Note on Covariates
 
@@ -69,6 +73,7 @@ bls_data %>% arrange(desc(date))
 
 #prep dataset for CS-DID package
 bls_data_did <- bls_data %>% 
+  mutate(laborforce_16over_percentage = (laborforce_16over / population_16over)*100) %>% 
   mutate(idname = as.numeric(paste0(state_fips, county_fips)),
          date = ym(date)) %>% 
   # limiting dataset to July 2020 - April 2023 (expiration of MA moratorium)
@@ -104,18 +109,31 @@ bls_data_did %>%
   arrange(date_num)
 
 # checking the coding of treatment v. control
-bls_data_did %>% 
+bls_data_did_nodc %>% 
   group_by(treatment, federal_end, state_end, first_treat) %>% 
   tally()
 
 # obs by group
 bls_data_did_nodc %>% 
-  group_by(first_treat) %>% 
+  group_by(date, new_year_mo) %>% 
   tally()
+
+obs_by_group <- bls_data_did_nodc %>% 
+  group_by(first_treat) %>% 
+  tally() %>% 
+  transmute(`Treatment Group` = round(first_treat, digits = 2),
+            `Observations` = scales::comma(n))
+
+write.table(obs_by_group , "/Users/cpreeldumas/Desktop/SPRING 2024/Capstone/interim report/obs_by_group.txt", sep = "\t", row.names = FALSE, quote = FALSE)
 
 bls_data_did_nodc %>% 
   filter(year == "2021") %>% 
   ggplot(aes(x = unemployment_rate)) + geom_histogram()
+
+bls_data_did_nodc %>% group_by(treatment, state) %>% tally()
+#illinois
+
+bls_data_did_nodc %>% filter(state == "IL")
 ```
 
 
@@ -161,38 +179,89 @@ pre_test <- conditional_did_pretest(yname = "unemployment_rate",
                         control_group = "notyettreated")
 ```
 ### Event study pre-test
+
+#### Simple LM
 ```{r}
 bls_data_common_pre <- bls_data_did_nodc %>% 
   filter(date < "2021-09-01") %>% 
-  mutate(treat_date_interact = treatment * new_year_mo)
+    mutate(
+      time = case_when(
+      date == "2021-08-01" ~ 0,
+      date == "2021-07-01" ~ -1,
+      date == "2021-06-01" ~ -2,
+      date == "2021-05-01" ~ -3,
+      date == "2021-04-01" ~ -4,
+      date == "2021-03-01" ~ -5,
+      date == "2021-02-01" ~ -6,
+      date == "2021-01-01" ~ -7,
+      date == "2020-12-01" ~ -8,
+      date == "2020-11-01" ~ -9,
+      date == "2020-10-01" ~ -10,
+      date == "2020-09-01" ~ -11,
+      date == "2020-08-01" ~ -12,
+      date == "2020-07-01" ~ -13),
+      time = factor(time, levels = c("0", "-1", "-2", "-3", "-4", "-5", "-6", "-7", "-8", "-9"
+                                     , "-10", "-11", "-12", "-13")),
+      time = relevel(time, ref = "0"))
 
-bls_data_common_pre %>% 
-  group_by(treatment) %>% tally()
 
-bls_data_common_pre %>% 
-  group_by(treatment, state) %>% tally()
 
-pre_testlm <- lm(unemployment_rate ~ treatment + new_year_mo + treat_date_interact + 
-                   total_population +
-                   renters_occupied_percentage +
+pre_testlm <- lm(unemployment_rate ~ treatment + time + treatment*time, 
+                 data = bls_data_common_pre)
+
+pretest_lm_sum <- summary(pre_testlm)
+
+stargazer(pre_testlm, type="text",  out="/Users/cpreeldumas/Desktop/SPRING 2024/Capstone/interim report/pretestlm_table.txt",
+          dep.var.labels = "Unemployment Rate")
+```
+
+```{r}
+plot_model(pre_testlm, title = "Unemployment Rate")
+```
+
+
+
+
+####  Panel LM
+```{r}
+pre_test <- plm(unemployment_rate ~ treatment + renters_occupied_percentage +
                    black_or_african_american_percentage + 
                    hispanic_or_latino_percentage +
                    bachelors_percentage +
                    median_age + 
                    median_income + 
-                   laborforce_16over, 
-                 data = bls_data_common_pre)
-
-summary(pre_testlm)
-
-pre_test <- plm(unemployment_rate ~ treatment,
+                   laborforce_16over_percentage,
                 data = bls_data_common_pre,
                 model = "within",
-                index = c("new_year_mo"))
+                index = c("new_year_mo", "idname"))
 summary(pre_test)
 index(pre_test)
-```
 
+pretest_table <- tidy(pre_test) %>% 
+  mutate(`Significance`= stars.pval(p.value)) %>% 
+  transmute(`Variable` = term,
+            `Estimate` = round(estimate, digits = 3), 
+            `Std. Error` = round(std.error, digits = 3),
+            `T-Value` = round(statistic, digits = 3), 
+            `P-Value` = formatC(p.value, format = "e", digits = 2),
+            `Significance`) %>% 
+  mutate(`Variable` = case_when(
+`Variable` == 'treatment' ~ "Treatment",
+`Variable` == 'renters_occupied_percentage' ~ "Share of Renters",
+`Variable` == 'black_or_african_american_percentage' ~ "Share Black",
+`Variable` == 'hispanic_or_latino_percentage' ~ "Share Hispanic",
+`Variable` == 'bachelors_percentage' ~ "Share Bachelors Degree",
+`Variable` == 'median_age' ~ "Median Age",	
+`Variable` == 'median_income' ~ "Median Income",
+`Variable` == 'laborforce_16over_percentage' ~ "Share in Labor Force"))
+
+write.table(pretest_table, "/Users/cpreeldumas/Desktop/SPRING 2024/Capstone/interim report/pretest_table.txt", sep = "\t", row.names = FALSE, quote = FALSE)
+
+stargazer(pre_test, type="html",  out="/Users/cpreeldumas/Desktop/SPRING 2024/Capstone/interim report/pretest_table.htm",
+           covariate.labels=c("Treatment", "Share of Renters", "Share Black", "Share Hispanic", "Share Bachelors Degree",
+                              "Median Age", "Median Income", "Share in Labor Force"),
+          dep.var.labels = "Unemployment Rate")
+```
 
 
 #### Group-time average treatment effects
@@ -213,17 +282,31 @@ attgt_nocovar <- att_gt(yname = "unemployment_rate",
                    data = bls_data_did_nodc)
 
 summary(attgt_nocovar)
-ggdid(attgt_nocovar, ylim = c(-3, 3), xlab = "Date", ylab = "ATT", xgap = 50)
+ggdid(attgt_nocovar, ylab = "ATT") +
+  scale_x_continuous(name = "Date",
+                     breaks=seq(1,34,6), 
+                     labels = c("2020-07",
+                                "2021-01", 
+                                "2021-07", 
+                                "2022-01", 
+                                "2022-07", 
+                                "2023-01"))
 ```
 
-#### Aggregate 
+### Aggregate 
 ```{r}
 # aggregate the group-time average treatment effects
 attgt_nocovar_dyn <- aggte(attgt_nocovar, type = "dynamic")
 summary(attgt_nocovar_dyn)
 
-ggdid(attgt_nocovar_dyn, ylim = c(-.3, .3), xgap = 10)
+ggdid(attgt_nocovar_dyn) +
+  scale_x_continuous(name = "Length of Exposure to Moratorium Lift")
+
+tidy_attgt_nocovar_dyn <- tidy(attgt_nocovar_dyn) %>%  mutate(`Significance`= stars.pval(p.value))
+
+write.table(tidy_attgt_nocovar_dyn, "/Users/cpreeldumas/Desktop/SPRING 2024/Capstone/interim report/attgt_nocovar_dyn.txt", sep = "\t", row.names = FALSE, quote = FALSE)
 ```
+
 # Issues so far
 
 1. Large standard errors
