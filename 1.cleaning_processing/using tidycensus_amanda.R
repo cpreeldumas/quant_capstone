@@ -1,7 +1,7 @@
 install.packages("tidycensus")
 install.packages("tidyverse")
 library(tidycensus)
-library(tidycensus)
+library(tidyverse)
 
 
 #check if you might need a new census API key:
@@ -31,12 +31,14 @@ v20 <- load_variables(2020, "acs5", cache = TRUE)
 #B01001F_001, Estimate!!Total:SEX BY AGE (SOME OTHER RACE ALONE), tract
 #B01001G_001, Estimate!!Total: SEX BY AGE (TWO OR MORE RACES), tract
 #B01001H_001, Estimate!!Total:SEX BY AGE (WHITE ALONE, NOT HISPANIC OR LATINO), tractWhite
-#B07013_002
-#B07013_003
+#B07013_002, Estimate!!Total:!!Householder lived in owner-occupied housing, GEOGRAPHICAL MOBILITY IN THE PAST YEAR BY TENURE FOR CURRENT RESIDENCE IN THE UNITED STATES, tract
+#B07013_003, Estimate!!Total:!!Householder lived in renter-occupied housing unit, GEOGRAPHICAL MOBILITY IN THE PAST YEAR BY TENURE FOR CURRENT RESIDENCE IN THE UNITED STATES, tract
 
-#Now exculding
+
+#Now excluding
 #B08537_002
 #B25008_003, Estimate!!Total:!!Renter occupied, TOTAL POPULATION IN OCCUPIED HOUSING UNITS BY TENURE, block group
+
 
 #Another population measure= B01001_001, Estimate!!Total: SEX BY AGE, block group 
 
@@ -64,6 +66,9 @@ covariate_data <- get_acs(geography = c("county"),
                           year = 2020,
                           sumfile = "dhc")
   covariate_data$moe<- NULL
+  
+  library(tidyverse)
+  
   covariate_data2<-covariate_data %>% 
   pivot_wider(
     names_from = variable, 
@@ -143,10 +148,56 @@ covariates_joined<-full_join(
   state_population2,
   by = "GEOID",
   copy = FALSE,
-  suffix = c(". Country_Covariate_Data3", ". State_Population2"),
+  suffix = c(". County_Covariate_Data3", ". State_Population2"),
   keep = NULL)
 
+#cutting some columns for descriptive statistics
+covariates_joined$GEOID<-NULL
+covariates_joined$GEOID2<-NULL
+covariates_joined$Highschool_graduate_percentage<-NULL
+covariates_joined$Below_highschool_percentage<-NULL
+covariates_joined$American_Indian_and_Alaska_Native_percentage<-NULL
+covariates_joined$Asian_percentage<-NULL
+covariates_joined$Native_Hawaiian_and_other_Pacific_Island_percentage<-NULL
+covariates_joined$Some_other_race_alone_percentage<-NULL
+covariates_joined$Two_or_more_races_percentage<-NULL
+covariates_joined$White_alone_not_hispanic_or_latino_percentage<-NULL
+covariates_joined$`NAME. State_Population2`<-NULL
 
+#preparing mean and median for a small output table
+Mean_Age<-mean(covariates_joined$Median_age)
+Median_Age<-median(covariates_joined$Median_age)
+
+Mean_M.Income<-median(covariates_joined$Median_income, na.rm=TRUE)
+Median_M.Income<-median(covariates_joined$Median_income, na.rm=TRUE)
+
+Mean_Population<-mean(covariates_joined$`Total_population. County_Covariate_Data3`)
+Median_Population<-median(covariates_joined$`Total_population. County_Covariate_Data3`)
+
+Mean_Renters<-mean(covariates_joined$Renters_occupied_percentage,na.rm=TRUE)
+Median_Renters<-median(covariates_joined$Renters_occupied_percentage, na.rm=TRUE)
+Mean_Bachelors<-mean(covariates_joined$Bachelors_percentage, na.rm=TRUE)
+Median_Bachelors<-median(covariates_joined$Bachelors_percentage, na.rm=TRUE)
+Mean_White<-mean(covariates_joined$White_alone_percentage)
+Median_White<-median(covariates_joined$White_alone_percentage)
+
+
+Measure<-c("Median","Mean")
+Age<-c(Median_Age,Mean_Age)
+Median_Income<-c(Median_M.Income,Mean_M.Income)
+Renters_Share<-c(Median_Renters, Mean_Renters)
+Bachelors<-c(Median_Bachelors,Mean_Bachelors)
+White_Percentage<-(Median_White,Mean_White)
+Population<-c(Median_Population, Mean_Population)
+
+
+df1<- data_frame(Measure,Age,Median_Income,Renters_Share,Bachelors,Population)
+  
+df2<- print.data.frame(df1)
+library(gridExtra)
+pdf(file="myfirstpdf2.pdf")
+grid.table(df1)
+dev.off()
 
 # why wouldn't above high school + below high school = 100%?? 
 covariate_data2$EDUC_PERCENT_SUM<-rowSums(covariate_data2[8:9])
@@ -156,9 +207,9 @@ covariate_data2$RACE_PERCENT_SUM<-rowSums(covariate_data2[10:18])
 covariates_joined$EDUC_PERCENT_SUM<-NULL
 covariates_joined$RACE_PERCENT_SUM<-NULL
 
-setwd("C:/Users/User/OneDrive/Desktop/New folder/NYU Classes/Quantitative Capstone/Covariates/2020")
+setwd("C:/Users/mandy/OneDrive/Desktop/New folder/NYU Classes/Quantitative Capstone/Covariates/2020")
 library(readr)
-write_csv(covariates_joined, 'covariates_census_v5')
+write_csv(covariates_joined, 'covariates_census_v7')
     
 
 
