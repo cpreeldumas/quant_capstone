@@ -19,23 +19,37 @@ library(gt)
 library(stargazer)
 library(skimr)
 library(survey)
+library(sjmisc)
+
 ```
 
 ## Load data
 
 ```{r}
-data <- read_csv("~/Documents/Coding Projects/quant_capstone/data_clean/data_v1.csv") %>%
+data <- read_csv("~/Documents/Coding Projects/quant_capstone/data_clean/data_v2.csv") %>%
+  clean_names("snake") %>%
   filter(date>="2020-07" & date<="2023-04") %>% # Study Period: July 2020 - April 2023
-  filter(state_fips <= "56" & state_fips != "11") %>% # Remove PR, Guam, Virgin Islands, DC
-  select(-"delete", -"county", -"NAME") %>%
+  filter(state_fips <= "56" & state_fips != "11" & county != "Bailey County, Texas") %>% # Remove PR, Guam, Virgin Islands, DC, Bailey County TX
+  select(-"delete", -"county", -"name") %>%
+  mutate(masks_order_code = as.numeric(masks_order_code)) %>%
   group_by(treatment)
 
 ```
 
-## Prep data for descriptive statistics
+## Tests
 
-* Pre-period: July 2020 to July 2021
-* Post-period: August 2021 to April 2023
+```{r}
+
+data_test <- data %>%
+  group_by(state_fips) %>%
+  summarize(median_income=mean(median_income))
+  
+```
+
+## Prep data
+
+-   Pre-period: July 2020 to July 2021
+-   Post-period: August 2021 to April 2023
 
 ```{r}
 
@@ -43,39 +57,159 @@ data_pre <- data %>%
   filter(date<="2021-07") %>%
   group_by(treatment) %>%
   summarize(states=length(unique(state_fips)),
-            counties=length(unique(county_fips)),
-            pct_renters=mean(Renters_occupied_percentage))
-  
+            counties=length(unique(countyname)),
+            laborforce=sum(laborforce_16over[date=="2020-07"]), 
+            unemployment_rate=mean(unemployment_rate),
+            pct_renters=mean(renters_occupied_percentage),
+            pct_black=mean(black_or_african_american_percentage),
+            pct_hispanic=mean(hispanic_or_latino_percentage),
+            pct_bachelors=mean(bachelors_percentage),
+            avg_median_age=mean(median_age),
+            avg_median_income=mean(median_income),
+            avg_health_spending=mean(health_spending)*100,
+            avg_housing_spending=mean(housing_spending)*100,
+            avg_welfare_spending=mean(welfare_spending)*100,
+            avg_covid_rate=mean(monthly_covid_rate),
+            pct_maskmandate=mean(masks_order_code)
+            ) %>%
+  select(-"treatment") %>%
+  rename("Number of States"=states,
+         "Number of Counties"=counties,
+         "Size of Labor Force"=laborforce,
+         "Unemployment Rate"=unemployment_rate,
+         "Share Renters"=pct_renters,
+         "Share Black"=pct_black,
+         "Share Hispanic"=pct_hispanic,
+         "Share College Degree"=pct_bachelors,
+         "Median Age"=avg_median_age,
+         "Median Income"=avg_median_income,
+         "Health Spending"=avg_health_spending,
+         "Housing Spending"=avg_housing_spending,
+         "Welfare Spnding"=avg_welfare_spending,
+         
+         ) %>%
+  rotate_df() %>%
+  rename(control_pre=V1, treatment_pre=V2)
+
+data_post <- data %>%
+  filter(date>"2021-07") %>%
+  group_by(treatment) %>%
+  summarize(states=length(unique(state_fips)),
+            counties=length(unique(countyname)),
+            laborforce=sum(laborforce_16over[date=="2021-08"]), 
+            unemployment_rate=mean(unemployment_rate),
+            pct_renters=mean(renters_occupied_percentage),
+            pct_black=mean(black_or_african_american_percentage),
+            pct_hispanic=mean(hispanic_or_latino_percentage),
+            pct_bachelors=mean(bachelors_percentage),
+            avg_median_age=mean(median_age),
+            avg_median_income=mean(median_income),
+            avg_health_spending=mean(health_spending)*100,
+            avg_housing_spending=mean(housing_spending)*100,
+            avg_welfare_spending=mean(welfare_spending)*100,
+            avg_covid_rate=mean(monthly_covid_rate),
+            pct_maskmandate=mean(masks_order_code, na.rm=TRUE)
+            ) %>%
+  select(-"treatment") %>%
+  rename("States"=states,
+         "Counties"=counties,
+         "Labor Force Size"=laborforce,
+         "Unemployment Rate"=unemployment_rate,
+         "Share Renters"=pct_renters,
+         "Share Black"=pct_black,
+         "Share Hispanic"=pct_hispanic,
+         
+         ) %>%
+  rotate_df() %>%
+  rename(control_post=V1, treatment_post=V2)
+
 
 ```
 
-
-## Descriptive statistics
+## Merge
 
 ```{r}
 
-data_ds %>%
-  skim()
-  
-  
+data_ds <- cbind(data_pre, data_post)
 
 ```
 
-
-
-
-
-
-
-
-
-
-
-
-## Camille example code
-
+## Packages
 
 ```{r}
+#data_tbl <- 
+
+gt(data_ds, rownames_to_stub = TRUE) |>
+  tab_spanner(
+    label = "Pre-treatment Period",
+    columns = c(control_pre,treatment_pre)
+  ) |>
+  tab_spanner(
+    label = "Post-treatment Period",
+    columns = c(control_post,treatment_post)
+  ) |>
+  tab_spanner(
+    label = "Average Characteristics",
+    columns = c(1:5)
+  ) |>
+  cols_label(
+    control_pre="Control Group",
+    treatment_pre="Treatment Group",
+    control_post="Control Group",
+    treatment_post="Treatment Group"
+  ) |>
+    tab_row_group(
+    label = "County-level Covariates",
+    rows = 11:15
+  ) |>  
+  tab_row_group(
+    label = "State-level Covariates",
+    rows = 5:10
+  ) |>
+  tab_row_group(
+    label = "Outcome Variable",
+    rows = 4
+  ) |>
+  tab_row_group(
+    label = "Sample Size",
+    rows = 1:3
+  ) |>
+  tab_source_note(
+    source_note = "Notes: xxx"
+  ) |>
+  text_case_match(
+    "test" ~ "states",
+    "states" ~ "test"
+    )
+```
+
+## Example code
+
+```{r}
+
+  datatable(rownames = c("Number of States", 
+                         "Number of Counties",
+                         "Size of Labor Force",
+                                "Unemployment Rate",
+                                "Share Renters",
+                                "Share Black",
+                                "Share Hispanic",
+                                "Share with College Degree",
+                                "Average Median Age",
+                                "Average Medican Income",
+                                "Health Spending",
+                                "Housing Spending",
+                                "Welfare Spending",
+                                "Average COVID-19 Rate",
+                                "Percent of Period with Mask Mandate"
+                                ),
+          colname = c("Treatment Group"))
+
+
+
+
+
+
 hvs21_hh_svy %>% 
   group_by(policy) %>% 
   summarize(across(starts_with("hh_"), ~ srvyr::survey_mean(.x, na.rm=T))) %>% 
