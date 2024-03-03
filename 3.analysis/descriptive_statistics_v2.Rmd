@@ -57,10 +57,11 @@ data_test <- data %>%
 
 data_pre <- data %>%
   filter(date<="2021-07") %>%
-  group_by(treatment) %>%
+  mutate(observations=n_distinct(fips,date)) %>%
+  group_by(treatment, observations) %>%
   summarize(states=length(unique(state_fips)),
             counties=length(unique(fips)),
-            laborforce=sum(laborforce_16over[date=="2020-10"]), 
+            laborforce=sum(laborforce_16over[date=="2020-10"]),
             unemployment_rate=mean(unemployment_rate),
             unemployment_rate=mean(unemployment_rate),
             avg_health_spending=mean(health_spending)*100,
@@ -75,8 +76,8 @@ data_pre <- data %>%
             avg_covid_rate=mean(monthly_covid_rate),
             pct_maskmandate=mean(masks_order_code, na.rm=TRUE)
             ) %>%
-  select(-"treatment") %>%
-  rename("States"=states,
+  rename("Observations"=observations,
+         "States"=states,
          "Counties"=counties,
          "Labor Force"=laborforce,
          "Unemployment Rate"=unemployment_rate,
@@ -92,15 +93,17 @@ data_pre <- data %>%
          "COVID-19 Incidence"=avg_covid_rate,
          "Portion Mask Mandate"=pct_maskmandate
          ) %>%
+  ungroup(-"treatment") %>%
   rotate_df() %>%
   rename(control_pre=V1, treatment_pre=V2)
 
 data_post <- data %>%
   filter(date>"2021-07") %>%
-  group_by(treatment) %>%
+  mutate(observations=n_distinct(fips,date)) %>%
+  group_by(treatment, observations) %>%
   summarize(states=length(unique(state_fips)),
             counties=length(unique(fips)),
-            laborforce=sum(laborforce_16over[date=="2021-08"]), 
+            laborforce=sum(laborforce_16over[date=="2021-08"]),
             unemployment_rate=mean(unemployment_rate),
             avg_health_spending=mean(health_spending)*100,
             avg_housing_spending=mean(housing_spending)*100,
@@ -114,7 +117,7 @@ data_post <- data %>%
             avg_covid_rate=mean(monthly_covid_rate),
             pct_maskmandate=mean(masks_order_code, na.rm=TRUE)
             ) %>%
-  select(-"treatment") %>%
+  ungroup(-"treatment") %>%
   rotate_df() %>%
   rename(control_post=V1, treatment_post=V2)
 
@@ -125,7 +128,10 @@ data_post <- data %>%
 
 ```{r}
 
-data_ds <- cbind(data_pre, data_post)
+data_ds <- cbind(data_pre, data_post) %>%
+   slice(-c(1))
+
+
 
 ```
 
@@ -135,6 +141,13 @@ data_ds <- cbind(data_pre, data_post)
 #data_tbl <- 
 
 gt(data_ds, rownames_to_stub = TRUE) |>
+cols_align(
+  align = c("center"),
+  columns = 2:5
+  ) |>
+  tab_header(
+    title = html("Table 1.<br>Descriptive Statistics")
+    ) |>
   tab_spanner(
     label = "Pre-treatment Period",
     columns = c(control_pre,treatment_pre)
@@ -148,32 +161,38 @@ gt(data_ds, rownames_to_stub = TRUE) |>
     columns = c(1:5)
   ) |>
   cols_label(
-    control_pre="Control Group",
-    treatment_pre="Treatment Group",
-    control_post="Control Group",
-    treatment_post="Treatment Group"
+    control_pre = html("Control Group<br>(1)"),
+    treatment_pre = html("Treatment Group<br>(2)"),
+    control_post = html("Control Group<br>(3)"),
+    treatment_post = html("Treatment Group<br>(4)")
   ) |>
-    tab_row_group(
-    label = "County-level Covariates",
-    rows = 8:15
+  tab_row_group(
+    label = "D. County-level Covariates",
+    rows = 9:16
   ) |>  
   tab_row_group(
-    label = "State-level Covariates",
-    rows = 5:7
+    label = "C. State-level Covariates",
+    rows = 6:8
   ) |>
   tab_row_group(
-    label = "Outcome Variable",
-    rows = 4
+    label = "B. Outcome Variable",
+    rows = 5
   ) |>
   tab_row_group(
-    label = "Sample Size",
-    rows = 1:3
+    label = "A. Sample Size",
+    rows = 1:4
+  ) |>
+  tab_stub_indent(
+    rows = everything(),
+    indent = 4
   ) |>
   tab_source_note(
-    source_note = "Notes: xxx"
+    source_note = "
+    Notes: This table displays average characteristics and differences in characteristics by treatment group for U.S. counties during the pre-treatment period (October 2020 to July 2021) and post-treatment period (August 2021 to April 2023). Panel A includes a count of unique county-date observations, counties, and states included in the study, along with the corresponding labor force size. Panel B shows differences in our outcome variable, Unemployment Rate, across groups and periods. Panel C reports state-level covariate variables, with state spending on health, housing, and welfare reported as a percentage of total state spending. Panel D reports county-level covariate variables. Census variables (labor force size, share renters, share black, share Hispanic, share college degree, median age, median income) are pulled from the 2020 5-Year ACS estimates and do not change across the study period. COVID-19 incidence is reported as the average number of new COVID-19 cases per 100,000 persons in the last 7 days across the pre- and post-treatment periods.
+    "
   ) |>
   fmt_percent(
-    rows = c(4:11,15),
+    rows = c(5:12,16),
     decimals = 2,
     drop_trailing_zeros = FALSE,
     drop_trailing_dec_mark = TRUE,
@@ -190,7 +209,7 @@ gt(data_ds, rownames_to_stub = TRUE) |>
     locale = NULL
   ) |>
   fmt_number(
-    rows = c(1:3,14),
+    rows = c(1:4,15),
     decimals = 0,
     n_sigfig = NULL,
     drop_trailing_zeros = FALSE,
@@ -207,7 +226,7 @@ gt(data_ds, rownames_to_stub = TRUE) |>
     locale = NULL
   ) |>
   fmt_number(
-    rows = c(12),
+    rows = c(13),
     decimals = 2,
     n_sigfig = NULL,
     drop_trailing_zeros = FALSE,
@@ -224,7 +243,7 @@ gt(data_ds, rownames_to_stub = TRUE) |>
     locale = NULL
   ) |>
   fmt_currency(
-    rows = c(13),
+    rows = c(14),
     currency = NULL,
     use_subunits = TRUE,
     decimals = 0,
