@@ -76,8 +76,8 @@ bls_data_did <- bls_data %>%
   mutate(laborforce_16over_percentage = (laborforce_16over / population_16over)*100) %>% 
   mutate(idname = as.numeric(paste0(state_fips, county_fips)),
          date = ym(date)) %>% 
-  # limiting dataset to July 2020 - April 2023 (expiration of MA moratorium)
-  filter(date >= "2020-07-01" & date <= "2023-04-01") %>% 
+  # limiting dataset to October 2020 - April 2023 (expiration of MA moratorium)
+  filter(date >= "2020-10-01" & date <= "2023-04-01") %>% 
   # making numeric version of data for DID package
   mutate(new_year_mo = as.numeric(as.yearmon(date))) %>% 
   mutate(across(c(state_start, state_end, federal_start, federal_end), mdy)) %>% 
@@ -94,7 +94,7 @@ bls_data_did <- bls_data %>%
 
 #dropping all NAs for now
 bls_data_did_nodc <- bls_data_did %>% 
-  filter(state != "DC" & state != "PR" & county != "Bailey County, Texas")
+  filter(state != "DC" & state != "PR" & county != "Bailey County, Texas" & state != "HI")
 ```
 
 ```{r, include = FALSE}
@@ -196,22 +196,19 @@ bls_data_common_pre <- bls_data_did_nodc %>%
       date == "2021-01-01" ~ -7,
       date == "2020-12-01" ~ -8,
       date == "2020-11-01" ~ -9,
-      date == "2020-10-01" ~ -10,
-      date == "2020-09-01" ~ -11,
-      date == "2020-08-01" ~ -12,
-      date == "2020-07-01" ~ -13),
-      time = factor(time, levels = c("0", "-1", "-2", "-3", "-4", "-5", "-6", "-7", "-8", "-9"
-                                     , "-10", "-11", "-12", "-13")),
+      date == "2020-10-01" ~ -10),
+      time = factor(time, levels = c("0", "-1", "-2", "-3", "-4", "-5", "-6", "-7", "-8", "-9", "-10"
+                                     )),
       time = relevel(time, ref = "0"))
 
-
+bls_data_common_pre %>% group_by(date, time) %>% tally()
 
 pre_testlm <- lm(unemployment_rate ~ treatment + time + treatment*time, 
                  data = bls_data_common_pre)
 
-pretest_lm_sum <- summary(pre_testlm)
+summary(pre_testlm)
 
-stargazer(pre_testlm, type="text",  out="/Users/cpreeldumas/Desktop/SPRING 2024/Capstone/interim report/pretestlm_table.txt",
+stargazer(pre_testlm, type="html",  out="/Users/cpreeldumas/Desktop/SPRING 2024/Capstone/interim report/pretestlm_table.htm",
           dep.var.labels = "Unemployment Rate")
 ```
 
@@ -284,13 +281,15 @@ attgt_nocovar <- att_gt(yname = "unemployment_rate",
 summary(attgt_nocovar)
 ggdid(attgt_nocovar, ylab = "ATT") +
   scale_x_continuous(name = "Date",
-                     breaks=seq(1,34,6), 
-                     labels = c("2020-07",
-                                "2021-01", 
-                                "2021-07", 
-                                "2022-01", 
-                                "2022-07", 
-                                "2023-01"))
+                     breaks=c(1, 7, 13, 19, 25, 30), 
+                     labels = c("2020-10",
+                                "2021-04", 
+                                "2021-10", 
+                                "2022-04", 
+                                "2022-10", 
+                                "2023-03"))
+
+bls_data_did_nodc %>% distinct(date) %>% pull()
 ```
 
 ### Aggregate 
@@ -302,7 +301,8 @@ summary(attgt_nocovar_dyn)
 ggdid(attgt_nocovar_dyn) +
   scale_x_continuous(name = "Length of Exposure to Moratorium Lift")
 
-tidy_attgt_nocovar_dyn <- tidy(attgt_nocovar_dyn) %>%  mutate(`Significance`= stars.pval(p.value))
+tidy_attgt_nocovar_dyn <- tidy(attgt_nocovar_dyn) %>%
+  mutate(`Significance`= stars.pval(p.value))
 
 write.table(tidy_attgt_nocovar_dyn, "/Users/cpreeldumas/Desktop/SPRING 2024/Capstone/interim report/attgt_nocovar_dyn.txt", sep = "\t", row.names = FALSE, quote = FALSE)
 ```
