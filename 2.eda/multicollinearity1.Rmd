@@ -18,7 +18,7 @@ library(scales)
 library(gtools)
 library(stargazer)
 library(sjPlot)
-library(corrplot)
+library(corrplot) #I added this, and the test will start from line 225.
 
 #import data
 bls_data <- read_csv("/Users/siyi/Documents/GitHub/quant_capstone/data_clean/data_v2.csv") %>% 
@@ -208,7 +208,7 @@ pre_test <- plm(unemployment_rate ~ treatment + renters_occupied_percentage +
                    bachelors_percentage +
                    median_age + 
                    median_income + 
-                   laborforce_16over_percentage+
+                   laborforce_16over+
                 health_spending + 
                      housing_spending + 
                      welfare_spending + 
@@ -222,13 +222,14 @@ index(pre_test)
 ```
 
 ```{r}
+#The multicollinearity test start from here!
 model=plm(unemployment_rate ~ treatment + renters_occupied_percentage +
                    black_or_african_american_percentage + 
                    hispanic_or_latino_percentage +
                    bachelors_percentage +
                    median_age + 
                    median_income + 
-                   laborforce_16over_percentage+
+                   laborforce_16over+
                    health_spending + 
                      housing_spending + 
                      welfare_spending + 
@@ -238,12 +239,13 @@ model=plm(unemployment_rate ~ treatment + renters_occupied_percentage +
 
 vif(model)
 ```
+# There is no VIF is more than 5, no strong evidence for multicollinearity, but we still want to use correaltion matrix to explore more trends.
 
 ```{r}
 variables <- bls_data_common_pre[, c("unemployment_rate", "treatment", "renters_occupied_percentage", 
                                 "black_or_african_american_percentage","hispanic_or_latino_percentage",
                                      "bachelors_percentage", "median_age", "median_income",
-                                     "laborforce_16over_percentage","health_spending", 
+                                     "laborforce_16over","health_spending", 
                                         "housing_spending","welfare_spending" , "pretreat_covid_rate",
                                   "pretreat_maskmandate_pct")]
 cor_matrix <- cor(variables)
@@ -279,12 +281,10 @@ corrplot(cor_matrix, method="color", col=mycol(200),
          )
 ```
 ```{r}
-# We can tell that the concerning correlation coefficients are：
-  #labour_16over_percentage & Median_income : 0.69
+# We can tell that the concerning correlation coefficients are (more than 0.7 is a high value)：
   #Bachelors_percentage & Median_income : 0.71
-  #labour_16over_percentage & Bachelors_percentage : 0.55
-#It is understandable that these variables are corelated with each other.
-#So we will first remove Median_income and Bachelor_percentage, as it seems to be the two relatively high average correlation coefficients among the three.
+#It is understandable that these two variables are corelated with each other.
+#So we remove Median_income to see the new correlationship.
 
 variables_new <- bls_data_common_pre[, c("unemployment_rate", "treatment","renters_occupied_percentage",
                                 "black_or_african_american_percentage","hispanic_or_latino_percentage",
@@ -323,6 +323,7 @@ corrplot(cor_matrix_new, method="color", col=mycol(200),
          diag=FALSE 
          )
 ```
+# There is no coefficient more than 0.7 this time, so we pass the multicollinearity check.
 
 
 
