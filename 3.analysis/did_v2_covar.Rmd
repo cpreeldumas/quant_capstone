@@ -270,11 +270,7 @@ attgt_nocovar <- att_gt(yname = "unemployment_rate",
                    clustervars = "idname",
                    allow_unbalanced_panel = TRUE,
                    xformla = ~ renters_occupied_percentage +
-                     black_or_african_american_percentage + 
-                     hispanic_or_latino_percentage +
-                     bachelors_percentage +
-                     median_income + 
-                     laborforce_16over,
+                     bachelors_percentage,
                    control_group = "notyettreated",
                    data = bls_data_did_nodc)
 
