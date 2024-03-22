@@ -1,0 +1,331 @@
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(scipen=999)
+
+# set up
+library(car)
+library(readr)
+library(lubridate)
+library(tidyverse)
+library(janitor)
+library(did)
+library(naniar)
+library(zoo)
+library(plm)
+library(DT)
+library(broom)
+library(scales)
+library(gtools)
+library(stargazer)
+library(sjPlot)
+library(corrplot) #I added this, and the test will start from line 225.
+
+#import data
+bls_data <- read_csv("/Users/siyi/Documents/GitHub/quant_capstone/data_clean/data_v2.csv") %>% 
+  clean_names("snake") #convert column names to snake case
+
+glimpse(bls_data)
+```
+
+# Initial Exploration Phase
+
+This is a second pass at using the CS-DID package. Next steps include:
+
+1. Adding anticipatory effects (if any) - might need to test the other deadlines that got pushed (to test how solid the anticipation is). Fir ex: moratorium is initially set to expire in March, then it's pushed in February a few months, we should already be seeing effect in Jan and Feb.
+2. Testing whether seasonality poses a threat
+
+# Methodology decisions
+
+1. Study period: July 2020 - April 2023 (expiration of MA moratorium)
+2. Dropping DC, PR, and 1 Texas County
+
+# Note on Covariates
+
+* The did package requires that covariates be time-invariant. For time varying covariates, the did package sets the value of the covariate to be equal to the value of the covariate in the “base period” where, 
+  * in post-treatment periods the base period is the period immediately before observations in a particular group become treated (when there is anticipation, it is before anticipation effects start too), 
+  * and in pre-treatment periods the base period is the period right before the current period. 
+
+# Prep data for CS-DID
+```{r, include = FALSE}
+#missingness
+miss_var_summary(bls_data)
+
+#why are these state missing state_start? 
+bls_data %>% 
+  filter(is.na(state_start)) %>% 
+  group_by(state) %>% 
+  tally()
+
+bls_data %>% arrange(desc(date))
+
+#prep dataset for CS-DID package
+bls_data_did <- bls_data %>% 
+  mutate(laborforce_16over_percentage = (laborforce_16over / population_16over)*100) %>% 
+  mutate(idname = as.numeric(paste0(state_fips, county_fips)),
+         date = ym(date)) %>% 
+  # limiting dataset to October 2020 - April 2023 (expiration of MA moratorium)
+  filter(date >= "2020-10-01" & date <= "2023-04-01") %>% 
+  # making numeric version of data for DID package
+  mutate(new_year_mo = as.numeric(as.yearmon(date))) %>% 
+  mutate(across(c(state_start, state_end, federal_start, federal_end), mdy)) %>% 
+  #making a numeric version of dates for first treat column
+  mutate(across(
+    .cols = c(state_start, state_end, federal_start, federal_end), 
+    .fns = ~ as.numeric(as.yearmon(.x)),
+    .names = "{.col}_new_year_mo")) %>% 
+  mutate(first_treat = case_when(
+    state == "MA" ~ 0, #never-treated group
+    treatment == 1 ~ federal_end_new_year_mo,
+    treatment == 0 ~ state_end_new_year_mo)) 
+
+
+#dropping all NAs for now
+bls_data_did_nodc <- bls_data_did %>% 
+  filter(state != "DC" & state != "PR" & county != "Bailey County, Texas" & state != "HI")
+```
+
+```{r, include = FALSE}
+# misc checks
+bls_data_did %>% 
+  group_by(state, treatment, federal_end, state_end, first_treat) %>% 
+  tally()
+
+bls_data_did %>% 
+  group_by(date,new_year_mo) %>% 
+  tally() %>% 
+  arrange(new_year_mo)
+
+# checking the coding of treatment v. control
+bls_data_did_nodc %>% 
+  group_by(treatment, federal_end, state_end, first_treat) %>% 
+  tally()
+
+# obs by group
+bls_data_did_nodc %>% 
+  group_by(date, new_year_mo) %>% 
+  tally()
+
+obs_by_group <- bls_data_did_nodc %>% 
+  group_by(first_treat) %>% 
+  tally() %>% 
+  transmute(`Treatment Group` = round(first_treat, digits = 2),
+            `Observations` = scales::comma(n))
+
+
+bls_data_did_nodc %>% 
+  filter(year == "2021") %>% 
+  ggplot(aes(x = unemployment_rate)) + geom_histogram()
+
+bls_data_did_nodc %>% group_by(treatment, state) %>% tally()
+#illinois
+
+bls_data_did_nodc %>% filter(state == "IL")
+```
+
+
+# CS-DID
+
+idname = fips
+tname = date
+yname = unemployment_rate
+gname = first_treat
+xformla = ~1 
+
+## Covariates
+
+renters_occupied_percentage +
+                     black_or_african_american_percentage + 
+                     hispanic_or_latino_percentage +
+                     bachelors_percentage +
+                     median_age + 
+                     median_income + 
+                     laborforce_16over + 
+                     health_spending + 
+                     housing_spending + 
+                     welfare_spending + 
+                     pretreat_covid_rate + 
+                     pretreat_maskmandate_pct
+
+                     
+#### Conditional Pre-Test
+```{r, warning = FALSE, message = FALSE}
+pre_test <- conditional_did_pretest(yname = "unemployment_rate",
+                        tname= "new_year_mo",
+                        idname = "idname",
+                        gname = "first_treat",
+                        xformla = ~
+                          renters_occupied_percentage +
+                     black_or_african_american_percentage + 
+                     hispanic_or_latino_percentage +
+                     bachelors_percentage +
+                     median_age + 
+                     median_income + 
+                     laborforce_16over,
+                        data = bls_data_did_nodc,
+                        control_group = "notyettreated")
+```
+### Event study pre-test
+
+#### Simple LM
+```{r}
+bls_data_common_pre <- bls_data_did_nodc %>% 
+  filter(date < "2021-09-01") %>% 
+    mutate(
+      time = case_when(
+      date == "2021-08-01" ~ 0,
+      date == "2021-07-01" ~ -1,
+      date == "2021-06-01" ~ -2,
+      date == "2021-05-01" ~ -3,
+      date == "2021-04-01" ~ -4,
+      date == "2021-03-01" ~ -5,
+      date == "2021-02-01" ~ -6,
+      date == "2021-01-01" ~ -7,
+      date == "2020-12-01" ~ -8,
+      date == "2020-11-01" ~ -9,
+      date == "2020-10-01" ~ -10),
+      time = factor(time, levels = c("0", "-1", "-2", "-3", "-4", "-5", "-6", "-7", "-8", "-9", "-10"
+                                     )),
+      time = relevel(time, ref = "0"))
+
+bls_data_common_pre %>% group_by(date, time) %>% tally()
+
+pre_testlm <- lm(unemployment_rate ~ treatment + time + treatment*time, 
+                 data = bls_data_common_pre)
+
+summary(pre_testlm)
+
+```
+
+```{r}
+plot_model(pre_testlm, title = "Unemployment Rate")
+```
+
+####  Panel LM
+```{r}
+pre_test <- plm(unemployment_rate ~ treatment + renters_occupied_percentage +
+                   black_or_african_american_percentage + 
+                   hispanic_or_latino_percentage +
+                   bachelors_percentage +
+                   median_age + 
+                   median_income + 
+                   laborforce_16over+
+                health_spending + 
+                     housing_spending + 
+                     welfare_spending + 
+                     pretreat_covid_rate + 
+                     pretreat_maskmandate_pct,
+                data = bls_data_common_pre,
+                model = "within",
+                index = c("new_year_mo", "idname"))
+summary(pre_test)
+index(pre_test)
+```
+
+```{r}
+#The multicollinearity test start from here!
+model=plm(unemployment_rate ~ treatment + renters_occupied_percentage +
+                   black_or_african_american_percentage + 
+                   hispanic_or_latino_percentage +
+                   bachelors_percentage +
+                   median_age + 
+                   median_income + 
+                   laborforce_16over+
+                   health_spending + 
+                     housing_spending + 
+                     welfare_spending + 
+                     pretreat_covid_rate + 
+                     pretreat_maskmandate_pct,
+           data=bls_data_common_pre,model="pooling")
+
+vif(model)
+```
+# There is no VIF is more than 5, no strong evidence for multicollinearity, but we still want to use correaltion matrix to explore more trends.
+
+```{r}
+variables <- bls_data_common_pre[, c("unemployment_rate", "treatment", "renters_occupied_percentage", 
+                                "black_or_african_american_percentage","hispanic_or_latino_percentage",
+                                     "bachelors_percentage", "median_age", "median_income",
+                                     "laborforce_16over","health_spending", 
+                                        "housing_spending","welfare_spending" , "pretreat_covid_rate",
+                                  "pretreat_maskmandate_pct")]
+cor_matrix <- cor(variables)
+print(cor_matrix)
+
+cor.mtest <- function(cor_matrix) {
+    cor_matrix <- as.matrix(cor_matrix)
+    n <- ncol(cor_matrix)
+    p.cor_matrix<- matrix(NA, n, n)
+    diag(p.cor_matrix) <- 0
+    for (i in 1:(n - 1)) {
+        for (j in (i + 1):n) {
+            tmp <- cor.test(cor_matrix[, i], cor_matrix[, j])
+            p.cor_matrix[i, j] <- p.cor_matrix[j, i] <- tmp$p.value
+        }
+    }
+  colnames(p.cor_matrix) <- rownames(p.cor_matrix) <- colnames(cor_matrix)
+  p.cor_matrix
+}
+# matrix of the p-value of the correlation
+p.cor_matrix <- cor.mtest(mtcars)
+head(p.cor_matrix[, 1:5])
+
+mycol <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
+corrplot(cor_matrix, method="color", col=mycol(200),  
+         type="upper", order="hclust", 
+         addCoef.col = "black", # Add coefficient of correlation
+         tl.col="black", tl.srt=45,tl.cex = 0.7, #Text label color and rotation
+         # Combine with significance
+         p.cor_matrix = p.cor_matrix, sig.level = 0.01, insig = "blank", 
+         # hide correlation coefficient on the principal diagonal
+         diag=FALSE 
+         )
+```
+```{r}
+# We can tell that the concerning correlation coefficients are (more than 0.7 is a high value)：
+  #Bachelors_percentage & Median_income : 0.71
+#It is understandable that these two variables are corelated with each other.
+#So we remove Median_income to see the new correlationship.
+
+variables_new <- bls_data_common_pre[, c("unemployment_rate", "treatment","renters_occupied_percentage",
+                                "black_or_african_american_percentage","hispanic_or_latino_percentage",
+                                 "median_age","laborforce_16over_percentage","health_spending", 
+                                        "housing_spending","welfare_spending" , "pretreat_covid_rate",
+                                  "pretreat_maskmandate_pct")]
+cor_matrix_new <- cor(variables_new)
+print(cor_matrix_new)
+
+cor.mtest <- function(cor_matrix_new) {
+    cor_matrix_new <- as.matrix(cor_matrix_new)
+    n <- ncol(cor_matrix_new)
+    p.cor_matrix_new<- matrix(NA, n, n)
+    diag(p.cor_matrix_new) <- 0
+    for (i in 1:(n - 1)) {
+        for (j in (i + 1):n) {
+            tmp <- cor.test(cor_matrix_new[, i], cor_matrix_new[, j])
+            p.cor_matrix_new[i, j] <- p.cor_matrix_new[j, i] <- tmp$p.value
+        }
+    }
+  colnames(p.cor_matrix_new) <- rownames(p.cor_matrix_new) <- colnames(cor_matrix_new)
+  p.cor_matrix_new
+}
+# matrix of the p-value of the correlation
+p.cor_matrix_new <- cor.mtest(mtcars)
+head(p.cor_matrix_new[, 1:5])
+
+mycol <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
+corrplot(cor_matrix_new, method="color", col=mycol(200),  
+         type="upper", order="hclust", 
+         addCoef.col = "black", # Add coefficient of correlation
+         tl.col="black", tl.srt=45,tl.cex = 0.7, #Text label color and rotation
+         # Combine with significance
+         p.cor_matrix_new = p.cor_matrix_new, sig.level = 0.01, insig = "blank", 
+         # hide correlation coefficient on the principal diagonal
+         diag=FALSE 
+         )
+```
+# There is no coefficient more than 0.7 this time, so we pass the multicollinearity check.
+
+
+
+
+
