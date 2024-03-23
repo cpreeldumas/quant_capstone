@@ -266,7 +266,7 @@ cor.mtest <- function(cor_matrix) {
   p.cor_matrix
 }
 # matrix of the p-value of the correlation
-p.cor_matrix <- cor.mtest(mtcars)
+p.cor_matrix <- cor.mtest(variables)
 head(p.cor_matrix[, 1:5])
 
 mycol <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
@@ -309,7 +309,7 @@ cor.mtest <- function(cor_matrix_new) {
   p.cor_matrix_new
 }
 # matrix of the p-value of the correlation
-p.cor_matrix_new <- cor.mtest(mtcars)
+p.cor_matrix_new <- cor.mtest(variables_new)
 head(p.cor_matrix_new[, 1:5])
 
 mycol <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
