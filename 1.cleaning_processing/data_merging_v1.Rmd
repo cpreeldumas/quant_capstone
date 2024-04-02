@@ -41,7 +41,7 @@ covariates_laborforce <- read_csv("~/Google Drive/My Drive/_Wagner/2024-01/Capst
 ## Load tidycensus data
 
 ```{r}
-covariates_census <- read_csv("~/Documents/Coding Projects/quant_capstone/data_raw/covariates_census_v5.csv") %>%
+covariates_census <- read_csv("~/Documents/Coding Projects/quant_capstone/data_raw/covariates_census_v8.csv") %>%
   rename(state_fips=GEOID, county_fips=GEOID2)
 
 ```
@@ -83,7 +83,7 @@ data3 <- left_join(data2, covariates_census,  by = c("state_fips", "county_fips"
 ```{r}
 
 data3 %>%
-  select(-delete, -county, -NAME)
+  select(-delete, -county, -24)
 ```
 
 ## Export data
