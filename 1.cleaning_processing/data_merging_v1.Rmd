@@ -49,10 +49,21 @@ covariates_census <- read_csv("~/Documents/Coding Projects/quant_capstone/data_r
 ## Load BLS data
 
 ```{r}
-BLS_data <- read_csv("~/Documents/Coding Projects/quant_capstone/data_clean/BLS_county_employment_clean.csv") %>%
+BLS_data <- read_csv("~/Documents/Coding Projects/quant_capstone/data_raw/BLS_county_employment_clean.csv") %>%
   mutate(date = format(date, '%Y-%m')) %>%
   separate(FIPS, into = c("state_fips", "county_fips"), -3) %>%
   filter(date >= "2020-07")
+
+```
+
+## Load Seasonally Adjusted BLS data
+
+```{r}
+BLS_seas <- read_csv("~/Documents/Coding Projects/quant_capstone/data_raw/BLS_seas_v1.csv") %>%
+  mutate(date = format(date, '%Y-%m')) %>%
+  rename(Unemployment_Rate_S=Unemployment_Rate) %>%
+  separate(FIPS, into = c("state_fips", "county_fips"), -3) %>%
+  filter(date >= "2020-07") 
 
 ```
 
@@ -60,10 +71,9 @@ BLS_data <- read_csv("~/Documents/Coding Projects/quant_capstone/data_clean/BLS_
 
 ```{r}
 
-data <- left_join(BLS_data, covariates_covid_statespend, by = c("date", "county_fips", "state_fips", "state"))
+data <- left_join(BLS_seas, BLS_data, by = c("date", "county_fips", "state_fips"))
 data2 <- left_join(data, covariates_laborforce,  by = c("state_fips", "county_fips"))
 data3 <- left_join(data2, covariates_census,  by = c("state_fips", "county_fips"))
-
 
 
 ```
@@ -73,14 +83,14 @@ data3 <- left_join(data2, covariates_census,  by = c("state_fips", "county_fips"
 ```{r}
 
 data3 %>%
-  group_by(state_fips, county_fips)
+  select(-delete, -county, -NAME)
 ```
 
 ## Export data
 
 ```{r}
 
-write.csv(data3, "~/Documents/Coding Projects/quant_capstone/data_clean/data_v2.csv", row.names=FALSE)
+write.csv(data3, "~/Documents/Coding Projects/quant_capstone/data_clean/data_v3.csv", row.names=FALSE)
 
 ```
 
