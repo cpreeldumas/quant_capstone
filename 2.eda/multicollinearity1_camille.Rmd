@@ -1,23 +1,9 @@
----
-title: "DiD Model w Covariates"
-author: "Camille Preel-Dumas"
-date: "Updated: `r format(Sys.time(), '%a, %b %d, %Y at %I:%M %p')`"
-output: 
-  html_document:
-    highlight: tango
-    toc: true
-    toc_float: true
-    toc_depth: 3
-    number_sections: false
-    df_print: kable
-    code_folding: hide
----
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 options(scipen=999)
 
 # set up
+library(car)
 library(readr)
 library(lubridate)
 library(tidyverse)
@@ -32,6 +18,7 @@ library(scales)
 library(gtools)
 library(stargazer)
 library(sjPlot)
+library(corrplot) #I added this, and the test will start from line 225.
 
 #import data
 bls_data <- read_csv("/Users/cpreeldumas/Documents/GitHub/quant_capstone/data_clean/data_v2.csv") %>% 
@@ -89,21 +76,7 @@ bls_data_did <- bls_data %>%
   mutate(first_treat = case_when(
     state == "MA" ~ 0, #never-treated group
     treatment == 1 ~ federal_end_new_year_mo,
-    treatment == 0 ~ state_end_new_year_mo))  
-# %>% 
-#   mutate(across(.cols = c("renters_occupied_percentage",
-#                      "black_or_african_american_percentage", 
-#                      "hispanic_or_latino_percentage", 
-#                      "bachelors_percentage", 
-#                      "median_age", 
-#                      "median_income", 
-#                      "laborforce_16over",  
-#                      "health_spending",  
-#                      "housing_spending",  
-#                      "welfare_spending", 
-#                      "pretreat_covid_rate",  
-#                      "pretreat_maskmandate_pct"),
-#                 ~ round(.x, digits = 2)))
+    treatment == 0 ~ state_end_new_year_mo)) 
 
 
 #dropping all NAs for now
@@ -118,9 +91,9 @@ bls_data_did %>%
   tally()
 
 bls_data_did %>% 
-  group_by(date, date_num) %>% 
+  group_by(date,new_year_mo) %>% 
   tally() %>% 
-  arrange(date_num)
+  arrange(new_year_mo)
 
 # checking the coding of treatment v. control
 bls_data_did_nodc %>% 
@@ -138,7 +111,6 @@ obs_by_group <- bls_data_did_nodc %>%
   transmute(`Treatment Group` = round(first_treat, digits = 2),
             `Observations` = scales::comma(n))
 
-write.table(obs_by_group , "/Users/cpreeldumas/Desktop/SPRING 2024/Capstone/interim report/obs_by_group.txt", sep = "\t", row.names = FALSE, quote = FALSE)
 
 bls_data_did_nodc %>% 
   filter(year == "2021") %>% 
@@ -222,16 +194,11 @@ pre_testlm <- lm(unemployment_rate ~ treatment + time + treatment*time,
 
 summary(pre_testlm)
 
-stargazer(pre_testlm, type="html",  out="/Users/cpreeldumas/Desktop/SPRING 2024/Capstone/interim report/pretestlm_table.htm",
-          dep.var.labels = "Unemployment Rate")
 ```
 
 ```{r}
 plot_model(pre_testlm, title = "Unemployment Rate")
 ```
-
-
-
 
 ####  Panel LM
 ```{r}
@@ -241,109 +208,129 @@ pre_test <- plm(unemployment_rate ~ treatment + renters_occupied_percentage +
                    bachelors_percentage +
                    median_age + 
                    median_income + 
-                   laborforce_16over_percentage,
+                   laborforce_16over+
+                health_spending + 
+                     housing_spending + 
+                     welfare_spending + 
+                     pretreat_covid_rate + 
+                     pretreat_maskmandate_pct,
                 data = bls_data_common_pre,
                 model = "within",
                 index = c("new_year_mo", "idname"))
 summary(pre_test)
 index(pre_test)
-
-pretest_table <- tidy(pre_test) %>% 
-  mutate(`Significance`= stars.pval(p.value)) %>% 
-  transmute(`Variable` = term,
-            `Estimate` = round(estimate, digits = 3), 
-            `Std. Error` = round(std.error, digits = 3),
-            `T-Value` = round(statistic, digits = 3), 
-            `P-Value` = formatC(p.value, format = "e", digits = 2),
-            `Significance`) %>% 
-  mutate(`Variable` = case_when(
-`Variable` == 'treatment' ~ "Treatment",
-`Variable` == 'renters_occupied_percentage' ~ "Share of Renters",
-`Variable` == 'black_or_african_american_percentage' ~ "Share Black",
-`Variable` == 'hispanic_or_latino_percentage' ~ "Share Hispanic",
-`Variable` == 'bachelors_percentage' ~ "Share Bachelors Degree",
-`Variable` == 'median_age' ~ "Median Age",	
-`Variable` == 'median_income' ~ "Median Income",
-`Variable` == 'laborforce_16over_percentage' ~ "Share in Labor Force"))
-
-write.table(pretest_table, "/Users/cpreeldumas/Desktop/SPRING 2024/Capstone/interim report/pretest_table.txt", sep = "\t", row.names = FALSE, quote = FALSE)
-
-stargazer(pre_test, type="html",  out="/Users/cpreeldumas/Desktop/SPRING 2024/Capstone/interim report/pretest_table.htm",
-           covariate.labels=c("Treatment", "Share of Renters", "Share Black", "Share Hispanic", "Share Bachelors Degree",
-                              "Median Age", "Median Income", "Share in Labor Force"),
-          dep.var.labels = "Unemployment Rate")
 ```
 
-#### Anticipation
-The decision to extend the eviction moratorium to July 31, 2021, was announced by the Centers for Disease Control and Prevention (CDC) on June 24, 2021. This extension was described as the final extension, aimed at providing additional support for tenants struggling to pay rent due to the pandemic. The context of this decision includes a backdrop of intense pressure from Congressional Democrats, leading to another extension through October 3, 2021, for counties with substantial and high levels of community transmission of the coronavirus. However, this later extension was struck down by the U.S. Supreme Court on August 26, 2021, effectively ending the federal eviction moratorium​
-
-Federal eviction moratorium ended on August 26, 2021
-Anticipation could start on June 24, 2021
-So, 2 months of anticipation
-
-2021-06-01 = 2021.417
-2021-08-01 = 2021.583
 ```{r}
-bls_data_did_nodc %>% group_by(date, new_year_mo) %>% tally()
+vif_data <- bls_data_did_nodc %>% 
+  filter(date == "2020-10-01")
 
-2021.583 - 2021.417
+n_distinct(vif_data$idname)
+
+#The multicollinearity test start from here!
+model=lm(unemployment_rate ~ treatment + renters_occupied_percentage +
+                   black_or_african_american_percentage + 
+                   hispanic_or_latino_percentage +
+                   bachelors_percentage +
+                   median_age + 
+                   median_income + 
+                   laborforce_16over+
+                   health_spending + 
+                     housing_spending + 
+                     welfare_spending + 
+                     pretreat_covid_rate + 
+                     pretreat_maskmandate_pct,
+           data=vif_data)
+
+vif(model)
 ```
+# There is no VIF is more than 5, no strong evidence for multicollinearity, but we still want to use correaltion matrix to explore more trends.
 
-
-#### Group-time average treatment effects
 ```{r}
-attgt_nocovar <- att_gt(yname = "unemployment_rate",
-                   gname = "first_treat",
-                   idname = "idname",
-                   tname = "new_year_mo",
-                   clustervars = "idname",
-                   allow_unbalanced_panel = TRUE,
-                   xformla = ~ 
-                     renters_occupied_percentage +
-                     bachelors_percentage +
-                     black_or_african_american_percentage + 
-                     hispanic_or_latino_percentage +
-                     laborforce_16over    
-                   
-                     #health_spending  
-                     #housing_spending  
-                     #welfare_spending 
-                     #pretreat_covid_rate  
-                     #pretreat_maskmandate_pct 
-                     ,
-                   control_group = "notyettreated",
-                   anticipation = 0.166,
-                   data = bls_data_did_nodc)
+variables <- vif_data[, c("unemployment_rate", "treatment", "renters_occupied_percentage", 
+                                "black_or_african_american_percentage","hispanic_or_latino_percentage",
+                                     "bachelors_percentage", "median_age", "median_income",
+                                     "laborforce_16over","health_spending", 
+                                        "housing_spending","welfare_spending" , "pretreat_covid_rate",
+                                  "pretreat_maskmandate_pct")]
+cor_matrix <- cor(variables)
+print(cor_matrix)
 
-summary(attgt_nocovar)
-ggdid(attgt_nocovar, ylab = "ATT") +
-  scale_x_continuous(name = "Date",
-                     breaks=c(1, 7, 13, 19, 25, 30), 
-                     labels = c("2020-10",
-                                "2021-04", 
-                                "2021-10", 
-                                "2022-04", 
-                                "2022-10", 
-                                "2023-03"))
+cor.mtest <- function(cor_matrix) {
+    cor_matrix <- as.matrix(cor_matrix)
+    n <- ncol(cor_matrix)
+    p.cor_matrix<- matrix(NA, n, n)
+    diag(p.cor_matrix) <- 0
+    for (i in 1:(n - 1)) {
+        for (j in (i + 1):n) {
+            tmp <- cor.test(cor_matrix[, i], cor_matrix[, j])
+            p.cor_matrix[i, j] <- p.cor_matrix[j, i] <- tmp$p.value
+        }
+    }
+  colnames(p.cor_matrix) <- rownames(p.cor_matrix) <- colnames(cor_matrix)
+  p.cor_matrix
+}
+# matrix of the p-value of the correlation
+p.cor_matrix <- cor.mtest(variables)
+head(p.cor_matrix[, 1:5])
 
-bls_data_did_nodc %>% distinct(date) %>% pull()
+mycol <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
+corrplot(cor_matrix, method="color", col=mycol(200),  
+         type="upper", order="hclust", 
+         addCoef.col = "black", # Add coefficient of correlation
+         tl.col="black", tl.srt=45,tl.cex = 0.7, #Text label color and rotation
+         # Combine with significance
+         p.cor_matrix = p.cor_matrix, sig.level = 0.01, insig = "blank", 
+         # hide correlation coefficient on the principal diagonal
+         diag=FALSE 
+         )
 ```
-
-### Aggregate 
 ```{r}
-# aggregate the group-time average treatment effects
-attgt_nocovar_dyn <- aggte(attgt_nocovar, type = "dynamic")
-summary(attgt_nocovar_dyn)
+# We can tell that the concerning correlation coefficients are (more than 0.7 is a high value)：
+  #Bachelors_percentage & Median_income : 0.71
+#It is understandable that these two variables are corelated with each other.
+#So we remove Median_income to see the new correlationship.
 
-ggdid(attgt_nocovar_dyn) +
-  scale_x_continuous(name = "Length of Exposure to Moratorium Lift")
+variables_new <- vif_data[, c("treatment", "unemployment_rate", "renters_occupied_percentage",
+                     "bachelors_percentage",
+                     "black_or_african_american_percentage", 
+                     "hispanic_or_latino_percentage",
+                     "laborforce_16over")]
+cor_matrix_new <- cor(variables_new)
+print(cor_matrix_new)
 
-tidy_attgt_nocovar_dyn <- tidy(attgt_nocovar_dyn) %>%
-  mutate(`Significance`= stars.pval(p.value))
+cor.mtest <- function(cor_matrix_new) {
+    cor_matrix_new <- as.matrix(cor_matrix_new)
+    n <- ncol(cor_matrix_new)
+    p.cor_matrix_new<- matrix(NA, n, n)
+    diag(p.cor_matrix_new) <- 0
+    for (i in 1:(n - 1)) {
+        for (j in (i + 1):n) {
+            tmp <- cor.test(cor_matrix_new[, i], cor_matrix_new[, j])
+            p.cor_matrix_new[i, j] <- p.cor_matrix_new[j, i] <- tmp$p.value
+        }
+    }
+  colnames(p.cor_matrix_new) <- rownames(p.cor_matrix_new) <- colnames(cor_matrix_new)
+  p.cor_matrix_new
+}
+# matrix of the p-value of the correlation
+p.cor_matrix_new <- cor.mtest(variables_new)
+head(p.cor_matrix_new[, 1:5])
 
-write.table(tidy_attgt_nocovar_dyn, "/Users/cpreeldumas/Desktop/SPRING 2024/Capstone/interim report/attgt_nocovar_dyn.txt", sep = "\t", row.names = FALSE, quote = FALSE)
+mycol <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
+corrplot(cor_matrix_new, method="color", col=mycol(200),  
+         type="upper", order="hclust", 
+         addCoef.col = "black", # Add coefficient of correlation
+         tl.col="black", tl.srt=45,tl.cex = 0.7, #Text label color and rotation
+         # Combine with significance
+         p.cor_matrix_new = p.cor_matrix_new, sig.level = 0.01, insig = "blank", 
+         # hide correlation coefficient on the principal diagonal
+         diag=FALSE 
+         )
 ```
+# There is no coefficient more than 0.7 this time, so we pass the multicollinearity check.
 
-# Issues so far
 
-1. Large standard errors
+
+
+

@@ -187,6 +187,17 @@ covariates_joined<-full_join(
   suffix = c(". County_Covariate_Data3", ". State_Population2"),
   keep = NULL)
 
+
+setwd("C:/Users/mandy/OneDrive/Desktop/New folder/NYU Classes/Quantitative Capstone/Covariates/2020")
+library(readr)
+write_csv(covariates_joined, 'covariates_census_v8')
+
+%USERPROFILE%\AppData\Local\RStudio-Desktop\sources
+history(Inf)
+
+
+
+
 #cutting some columns for descriptive statistics
 covariates_joined$GEOID<-NULL
 covariates_joined$GEOID2<-NULL
@@ -242,10 +253,5 @@ covariate_data2$RACE_PERCENT_SUM<-rowSums(covariate_data2[10:18])
 
 covariates_joined$EDUC_PERCENT_SUM<-NULL
 covariates_joined$RACE_PERCENT_SUM<-NULL
-
-setwd("C:/Users/mandy/OneDrive/Desktop/New folder/NYU Classes/Quantitative Capstone/Covariates/2020")
-library(readr)
-write_csv(covariates_joined, 'covariates_census_v7')
-    
 
 
