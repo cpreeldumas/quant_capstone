@@ -78,19 +78,19 @@ data3 <- left_join(data2, covariates_census,  by = c("state_fips", "county_fips"
 
 ```
 
-## Test data
+## Update data
 
 ```{r}
 
-data3 %>%
-  select(-delete, -county, -24)
+data4 <- data3 %>%
+  select(-delete, -county, -24, -41)
 ```
 
 ## Export data
 
 ```{r}
 
-write.csv(data3, "~/Documents/Coding Projects/quant_capstone/data_clean/data_v3.csv", row.names=FALSE)
+write.csv(data4, "~/Documents/Coding Projects/quant_capstone/data_clean/data_v3.csv", row.names=FALSE)
 
 ```
 
