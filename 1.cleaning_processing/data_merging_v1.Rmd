@@ -83,7 +83,7 @@ data3 <- left_join(data2, covariates_census,  by = c("state_fips", "county_fips"
 ```{r}
 
 data4 <- data3 %>%
-  select(-delete, -county, -24, -41)
+  select(-delete, -24, -41)
 ```
 
 ## Export data
