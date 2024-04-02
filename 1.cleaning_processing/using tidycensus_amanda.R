@@ -45,14 +45,18 @@ v20 <- load_variables(2020, "acs5", cache = TRUE)
 #more on age from Denise 6 Feb   
 
 
+
 covariate_data <- get_acs(geography = c("county"),
                           variables = c(Bachelors="B06009_005",
+                                        
                                         Below_highschool="B06009_002",
+                                        
                                         Highschool_graduate="B06009_003",
                                         Renter_occupied="B07013_003",
                                         Owner_occupied="B07013_002",
                                         Median_age="B01002_001",
-                                        Median_income="B06011_001",
+                                        Females="B01001_026",
+                                        Males= "B01001_002",
                                         Total_population="B01003_001", 
                                         White_alone_not_hispanic_or_latino="B01001H_001", 
                                         White_alone= "B01001A_001", 
@@ -124,6 +128,7 @@ covariate_data2$Native_Hawaiian_and_other_Pacific_Island_percentage<- covariate_
 covariate_data2$Some_other_race_alone_percentage<- covariate_data2$Some_other_race_alone/ covariate_data2$Total_population*100
 covariate_data2$Two_or_more_races_percentage<- covariate_data2$Two_or_more_races/ covariate_data2$Total_population*100
 covariate_data2$White_alone_not_hispanic_or_latino_percentage<- covariate_data2$Hispanic_or_Latino/ covariate_data2$Total_population*100
+covariate_data2$Male_female_ratio<-covariate_data2$Males/covariate_data2$Females
 
 
 covariate_data2$Renter_occupied<- NULL
@@ -141,6 +146,8 @@ covariate_data2$Native_Hawaiian_and_other_Pacific_Island<- NULL
 covariate_data2$Some_other_race_alone<- NULL
 covariate_data2$Two_or_more_races<- NULL
 covariate_data2$White_alone_not_hispanic_or_latino<- NULL
+covariate_data2$Males<-NULL
+covariate_data2$Females<-NULL
 
 #get_acs for state level population then merge 
 state_population <- get_acs(geography = c("state"),
