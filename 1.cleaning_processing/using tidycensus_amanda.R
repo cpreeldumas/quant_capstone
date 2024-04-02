@@ -45,14 +45,18 @@ v20 <- load_variables(2020, "acs5", cache = TRUE)
 #more on age from Denise 6 Feb   
 
 
+
 covariate_data <- get_acs(geography = c("county"),
                           variables = c(Bachelors="B06009_005",
+                                        
                                         Below_highschool="B06009_002",
+                                        
                                         Highschool_graduate="B06009_003",
                                         Renter_occupied="B07013_003",
                                         Owner_occupied="B07013_002",
                                         Median_age="B01002_001",
-                                        Median_income="B06011_001",
+                                        Females="B01001_026",
+                                        Males= "B01001_002",
                                         Total_population="B01003_001", 
                                         White_alone_not_hispanic_or_latino="B01001H_001", 
                                         White_alone= "B01001A_001", 
@@ -65,6 +69,35 @@ covariate_data <- get_acs(geography = c("county"),
                                         Two_or_more_races= "B01001G_001"), 
                           year = 2020,
                           sumfile = "dhc")
+
+#to check validity of education variables 
+covariate_data <- get_acs(geography = c("county"),
+                          variables = c(Bachelors="B06009_005",Bachelors_2= "B15011_001", Below_highschool="B06009_002", Below_highschool2="B07009_002",
+                                       Total_population="B01003_001",
+                                        Highschool_graduate="B06009_003"
+                                      ), 
+                          year = 2020,
+                          sumfile = "dhc")
+#the two codes for below high school return similar results, meaning B06009_002 was always correct to use. Assuming that is true, then we can assume B06009_003 is accurate. And if that is true then we shall still stick with B06009_005 for Bachelors because for the first result (Antigua County), the Bachelors cannot logically be more than the high school graduates. 
+
+#To check other possibly useful variables
+B09001_002- Estimate!!Total:!!In households:POPULATION UNDER 18 YEARS BY AGE: Tract
+
+B01001_026- the female one
+B01001_002- the male one
+#add the two above and compare with total population 
+
+
+B98012_001
+C15002I_010
+C15002I_005
+
+
+
+
+
+
+#continuation from detour 
   covariate_data$moe<- NULL
   
   library(tidyverse)
@@ -95,6 +128,7 @@ covariate_data2$Native_Hawaiian_and_other_Pacific_Island_percentage<- covariate_
 covariate_data2$Some_other_race_alone_percentage<- covariate_data2$Some_other_race_alone/ covariate_data2$Total_population*100
 covariate_data2$Two_or_more_races_percentage<- covariate_data2$Two_or_more_races/ covariate_data2$Total_population*100
 covariate_data2$White_alone_not_hispanic_or_latino_percentage<- covariate_data2$Hispanic_or_Latino/ covariate_data2$Total_population*100
+covariate_data2$Male_female_ratio<-covariate_data2$Males/covariate_data2$Females
 
 
 covariate_data2$Renter_occupied<- NULL
@@ -112,6 +146,8 @@ covariate_data2$Native_Hawaiian_and_other_Pacific_Island<- NULL
 covariate_data2$Some_other_race_alone<- NULL
 covariate_data2$Two_or_more_races<- NULL
 covariate_data2$White_alone_not_hispanic_or_latino<- NULL
+covariate_data2$Males<-NULL
+covariate_data2$Females<-NULL
 
 #get_acs for state level population then merge 
 state_population <- get_acs(geography = c("state"),
@@ -150,6 +186,17 @@ covariates_joined<-full_join(
   copy = FALSE,
   suffix = c(". County_Covariate_Data3", ". State_Population2"),
   keep = NULL)
+
+
+setwd("C:/Users/mandy/OneDrive/Desktop/New folder/NYU Classes/Quantitative Capstone/Covariates/2020")
+library(readr)
+write_csv(covariates_joined, 'covariates_census_v8')
+
+%USERPROFILE%\AppData\Local\RStudio-Desktop\sources
+history(Inf)
+
+
+
 
 #cutting some columns for descriptive statistics
 covariates_joined$GEOID<-NULL
@@ -206,10 +253,5 @@ covariate_data2$RACE_PERCENT_SUM<-rowSums(covariate_data2[10:18])
 
 covariates_joined$EDUC_PERCENT_SUM<-NULL
 covariates_joined$RACE_PERCENT_SUM<-NULL
-
-setwd("C:/Users/mandy/OneDrive/Desktop/New folder/NYU Classes/Quantitative Capstone/Covariates/2020")
-library(readr)
-write_csv(covariates_joined, 'covariates_census_v7')
-    
 
 
