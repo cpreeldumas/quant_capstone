@@ -37,6 +37,7 @@ state_spending <- read_excel("~/Documents/Coding Projects/quant_capstone/data_ra
 
 state_spending2 <-
   state_spending %>%
+  filter(year==2020)
   rename(health_spending=e052_health_hosp_dir_exp, housing_spending=e074_hous_com_direct_exp, welfare_spending=e090_public_welf_direct_exp) %>%
   group_by(state, state_fips) %>%
   summarize(health_spending = mean(health_spending), housing_spending = mean(housing_spending), welfare_spending = mean(welfare_spending))
