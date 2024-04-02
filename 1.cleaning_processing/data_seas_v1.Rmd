@@ -1,0 +1,52 @@
+---
+title: "seasonal_adjustment"
+author: "Denise Upton"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE)
+
+# set up
+library(readr)
+library(readxl)
+library(lubridate)
+library(tidyverse)
+library(janitor)
+library(DT)
+library(seasthedata)
+library(dplyr)
+library(tibble)
+```
+
+## Seasonal Adjustment
+
+* https://github.com/christophsax/seasonal
+* https://github.com/angusmoore/seasthedata
+
+## Load data
+
+```{r}
+data <- read_csv("~/Documents/Coding Projects/quant_capstone/data_clean/BLS_county_employment_clean.csv") %>%
+  select(FIPS, date, Unemployment_Rate) %>%
+  group_by(FIPS) %>%
+  arrange(FIPS, date)
+
+```
+
+
+## Adjust data
+
+```{r}
+
+data_seas<- seasthedata(data)
+
+```
+
+
+## Export data
+
+```{r}
+
+write.csv(data_seas, "~/Documents/Coding Projects/quant_capstone/data_raw/BLS_seas_v1.csv", row.names=FALSE)
+
+```
