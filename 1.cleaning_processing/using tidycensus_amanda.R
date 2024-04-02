@@ -65,6 +65,35 @@ covariate_data <- get_acs(geography = c("county"),
                                         Two_or_more_races= "B01001G_001"), 
                           year = 2020,
                           sumfile = "dhc")
+
+#to check validity of education variables 
+covariate_data <- get_acs(geography = c("county"),
+                          variables = c(Bachelors="B06009_005",Bachelors_2= "B15011_001", Below_highschool="B06009_002", Below_highschool2="B07009_002",
+                                       Total_population="B01003_001",
+                                        Highschool_graduate="B06009_003"
+                                      ), 
+                          year = 2020,
+                          sumfile = "dhc")
+#the two codes for below high school return similar results, meaning B06009_002 was always correct to use. Assuming that is true, then we can assume B06009_003 is accurate. And if that is true then we shall still stick with B06009_005 for Bachelors because for the first result (Antigua County), the Bachelors cannot logically be more than the high school graduates. 
+
+#To check other possibly useful variables
+B09001_002- Estimate!!Total:!!In households:POPULATION UNDER 18 YEARS BY AGE: Tract
+
+B01001_026- the female one
+B01001_002- the male one
+#add the two above and compare with total population 
+
+
+B98012_001
+C15002I_010
+C15002I_005
+
+
+
+
+
+
+#continuation from detour 
   covariate_data$moe<- NULL
   
   library(tidyverse)
