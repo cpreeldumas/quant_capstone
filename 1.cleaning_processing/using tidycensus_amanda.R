@@ -216,7 +216,8 @@ covariate_data5<-left_join(
   copy = FALSE,
   keep = NULL)
 
-
+covariate_data5$popul_density<-covariate_data5$Total_population/covariate_data5$Land_Area
+covariate_data5$Land_Area<-NULL
 
 
 
@@ -274,7 +275,7 @@ covariates_joined2<-full_join(
 
 setwd("C:/Users/mandy/OneDrive/Desktop/New folder/NYU Classes/Quantitative Capstone/Covariates/2020")
 library(readr)
-write_csv(covariates_joined, 'covariates_census_v8')
+write_csv(covariate_data5, 'covariates_census_v10')
 
 %USERPROFILE%\AppData\Local\RStudio-Desktop\sources
 history(Inf)
