@@ -67,6 +67,6 @@ which(is.na(data_seas1$Unemployment_Rate))
 
 ```{r}
 
-write.csv(data_seas, "~/Documents/Coding Projects/quant_capstone/data_raw/BLS_seas_v1.csv", row.names=FALSE)
+write.csv(data_seas1, "~/Documents/Coding Projects/quant_capstone/data_raw/BLS_seas_v2.csv", row.names=FALSE)
 
 ```
