@@ -30,7 +30,6 @@ data <- read_csv("~/Documents/Coding Projects/quant_capstone/data_clean/data_v3.
   clean_names("snake") %>%
   filter(date>="2020-10" & date<="2023-04") %>% # Study Period: Oct 2020 - April 2023
   filter(state_fips <= "56" & state_fips != "11" & county != "Bailey County, Texas") %>% # Remove PR, Guam, Virgin Islands, DC, Bailey County TX
-  select(-"delete", -"county", -"name") %>%
   mutate(masks_order_code = as.numeric(masks_order_code)) %>%
   mutate(fips = paste(state_fips, county_fips, sep = ""))
 
