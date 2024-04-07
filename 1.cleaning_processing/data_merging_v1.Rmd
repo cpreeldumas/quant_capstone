@@ -88,6 +88,9 @@ data4 <- left_join(data3, covariates_census,  by = c("county"))
 
 data5 <- data4 %>%
   select(-20, -30, -34, -35)
+
+
+summary(data5)
 ```
 
 ## Export data
