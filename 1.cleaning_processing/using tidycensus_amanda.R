@@ -112,7 +112,7 @@ C15002I_005
 
 
 
-covariate_data2$Owners_plus_renters<-rowSums(covariate_data2[18:19])
+covariate_data2$Owners_plus_renters<-rowSums(covariate_data2[19:20])
 
 # Create fractions
 covariate_data2$Renters_occupied_percentage <- covariate_data2$Renter_occupied/ covariate_data2$Owners_plus_renters*100
