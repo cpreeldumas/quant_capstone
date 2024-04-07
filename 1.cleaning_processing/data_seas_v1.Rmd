@@ -23,25 +23,45 @@ library(tibble)
 * https://github.com/christophsax/seasonal
 * https://github.com/angusmoore/seasthedata
 
-## Load data
+## Load data - 2015+
 
 ```{r}
-data <- read_csv("~/Documents/Coding Projects/quant_capstone/data_clean/BLS_county_employment_clean.csv") %>%
-  select(FIPS, date, Unemployment_Rate) %>%
-  group_by(FIPS) %>%
-  arrange(FIPS, date)
+data1 <- read_csv("~/Documents/Coding Projects/quant_capstone/data_raw/BLS_county_employment_clean.csv") %>%
+  separate(FIPS, into = c("state_fips", "county_fips"), -3) %>%
+  filter(state_fips <= "56" & state_fips != "11" & countyname != "Bailey County") %>% # Remove PR, Guam, Virgin Islands, DC, Bailey County TX
+  select(state_fips, county_fips, date, Unemployment_Rate, countyname) %>%
+  arrange(state_fips, county_fips, date) %>%
+  group_by(countyname, state_fips, county_fips) 
 
 ```
 
+## Load data - 2019+
+
+```{r}
+data2 <- read_csv("~/Documents/Coding Projects/quant_capstone/data_raw/BLS_county_employment_clean.csv") %>%
+  select(FIPS, date, Unemployment_Rate) %>%
+  group_by(FIPS) %>%
+  filter(date >= "2018-01-01")
+
+```
 
 ## Adjust data
 
 ```{r}
 
-data_seas<- seasthedata(data)
+data_seas1<- seasthedata(data1)
 
 ```
+## Explore data
 
+```{r}
+
+summary(data_seas1)
+
+which(is.na(data_seas1$Unemployment_Rate))
+
+
+```
 
 ## Export data
 
