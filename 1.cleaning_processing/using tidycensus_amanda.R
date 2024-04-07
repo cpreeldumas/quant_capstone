@@ -188,6 +188,45 @@ covariates_joined<-full_join(
   keep = NULL)
 
 
+
+#Enter Land Area from Cencus
+
+install.packages("tidyr")
+library(tidyr)
+
+install.packages("stringr")
+library(stringr)
+
+setwd("C:/Users/mandy/OneDrive/Desktop/New folder/NYU Classes/Quantitative Capstone/Covariates")
+dir()
+
+LandArea <- read.csv("LandArea2.csv",stringsAsFactors=TRUE)
+View(LandArea)
+
+# seperate function on FIPS
+library(tidyverse)
+
+LandArea2<- separate(
+  data= LandArea,
+  col= "STCOU",
+  into= c("GEOID1", "GEOID"),
+  sep = +1,
+  remove = TRUE,
+  convert = FALSE,
+  extra = "warn",
+  fill = "warn",
+)
+
+covariates_joined2<-full_join(
+  covariate_joined,
+  LandArea2,
+  by = "GEOID",
+  copy = FALSE,
+  suffix = c(". County_Covariate_Data4", ". LandArea2"),
+  keep = NULL)
+
+
+
 setwd("C:/Users/mandy/OneDrive/Desktop/New folder/NYU Classes/Quantitative Capstone/Covariates/2020")
 library(readr)
 write_csv(covariates_joined, 'covariates_census_v8')
