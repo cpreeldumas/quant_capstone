@@ -90,6 +90,7 @@ bls_data_did <- bls_data %>%
     state == "MA" ~ 0, #never-treated group
     treatment == 1 ~ federal_end_new_year_mo,
     treatment == 0 ~ state_end_new_year_mo))  
+#option to round all numeric covariates in our model (could help multicollinearity)
 # %>% 
 #   mutate(across(.cols = c("renters_occupied_percentage",
 #                      "black_or_african_american_percentage", 
@@ -109,7 +110,15 @@ bls_data_did <- bls_data %>%
 #dropping all NAs for now
 bls_data_did_nodc <- bls_data_did %>% 
   filter(state != "DC" & state != "PR" & county != "Bailey County, Texas" & state != "HI")
+
+#bls_data_did_nodc %>% filter(is.na(unemployment_rate_s))
+
+bls_data_did_nodc %>% group_by(state, treatment) %>% tally() %>% arrange(treatment)
+
+bls_data_did_nodc %>% filter(state == "IL")
 ```
+
+
 
 ```{r, include = FALSE}
 # misc checks
@@ -131,6 +140,9 @@ bls_data_did_nodc %>%
 bls_data_did_nodc %>% 
   group_by(date, new_year_mo) %>% 
   tally()
+
+bls_data_did_nodc %>% 
+  group_by(treatment, first_treat, federal_end, state_end) %>% tally()
 
 obs_by_group <- bls_data_did_nodc %>% 
   group_by(first_treat) %>% 
@@ -223,11 +235,55 @@ pre_testlm <- lm(unemployment_rate ~ treatment + time + treatment*time,
 summary(pre_testlm)
 
 stargazer(pre_testlm, type="html",  out="/Users/cpreeldumas/Desktop/SPRING 2024/Capstone/interim report/pretestlm_table.htm",
-          dep.var.labels = "Unemployment Rate")
+          dep.var.labels = "Unemployment Rate",
+          covariate.labels=c("Treatment",
+                             "1 Month Prior to Treatment",
+                             "2 Months Prior",
+                             "3 Months Prior",
+                             "4 Months Prior",
+                             "5 Months Prior",
+                             "6 Months Prior",
+                             "7 Months Prior",
+                             "8 Months Prior",
+                             "9 Months Prior",
+                             "10 Months Prior",
+                             "Treatment x 1 Month Prior",
+                             "Treatment x 2 Months Prior",
+                             "Treatment x 3 Months Prior",
+                             "Treatment x 4 Months Prior",
+                             "Treatment x 5 Months Prior",
+                             "Treatment x 6 Months Prior",
+                             "Treatment x 7 Months Prior",
+                             "Treatment x 8 Months Prior",
+                             "Treatment x 9 Months Prior",
+                             "Treatment x 10 Months Prior"
+                             ),no.space=TRUE)
 ```
 
 ```{r}
-plot_model(pre_testlm, title = "Unemployment Rate")
+plot_model(pre_testlm, title = "Unemployment Rate",
+           axis.labels =  rev(c(
+            "Treatment",
+            "-1 Month",
+            "-2 Months",
+            "-3 Months",
+            "-4 Months",
+            "-5 Months",
+            "-6 Months",
+            "-7 Months",
+            "-8 Months",
+            "-9 Months",
+            "-10 Months",
+            "Treat x -1 Month",
+            "Treat x -2 Months",
+            "Treat x -3 Months",
+            "Treat x -4 Months",
+            "Treat x -5 Months",
+            "Treat x -6 Months",
+            "Treat x -7 Months",
+            "Treat x -8 Months",
+            "Treat x -9 Months",
+            "Treat x -10 Months")))
 ```
 
 
@@ -303,8 +359,8 @@ attgt_nocovar <- att_gt(yname = "unemployment_rate",
                      bachelors_percentage +
                      black_or_african_american_percentage + 
                      hispanic_or_latino_percentage +
-                     laborforce_16over    
-                   
+                     laborforce_16over 
+                     
                      #health_spending  
                      #housing_spending  
                      #welfare_spending 
@@ -312,11 +368,11 @@ attgt_nocovar <- att_gt(yname = "unemployment_rate",
                      #pretreat_maskmandate_pct 
                      ,
                    control_group = "notyettreated",
-                   anticipation = 0.166,
+                   #anticipation = 0.166,
                    data = bls_data_did_nodc)
 
 summary(attgt_nocovar)
-ggdid(attgt_nocovar, ylab = "ATT") +
+att_plot <- ggdid(attgt_nocovar, ylab = "ATT") +
   scale_x_continuous(name = "Date",
                      breaks=c(1, 7, 13, 19, 25, 30), 
                      labels = c("2020-10",
@@ -325,6 +381,10 @@ ggdid(attgt_nocovar, ylab = "ATT") +
                                 "2022-04", 
                                 "2022-10", 
                                 "2023-03"))
+
+ggsave(filename = "att_plot.png",
+       plot = att_plot,
+       path = "/Users/cpreeldumas/Desktop/SPRING 2024/Capstone/plots/")
 
 bls_data_did_nodc %>% distinct(date) %>% pull()
 ```
