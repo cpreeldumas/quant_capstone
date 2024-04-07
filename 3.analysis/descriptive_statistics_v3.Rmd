@@ -1,0 +1,313 @@
+---
+title: "descriptive_statistics_v3"
+author: "Denise Upton"
+date: "2024-02-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE)
+
+# set up
+library(readr)
+library(readxl)
+library(lubridate)
+library(tidyverse)
+library(janitor)
+library(DT)
+library(gt)
+library(stargazer)
+library(skimr)
+library(survey)
+library(sjmisc)
+
+```
+
+## Load data
+
+```{r}
+data <- read_csv("~/Documents/Coding Projects/quant_capstone/data_clean/data_v3.csv") %>%
+  clean_names("snake") %>%
+  filter(date>="2020-10" & date<="2023-04") %>% # Study Period: Oct 2020 - April 2023
+  filter(state_fips <= "56" & state_fips != "11" & county != "Bailey County, Texas") %>% # Remove PR, Guam, Virgin Islands, DC, Bailey County TX
+  mutate(masks_order_code = as.numeric(masks_order_code)) %>%
+  mutate(fips = paste(state_fips, county_fips, sep = ""))
+
+```
+
+## Tests
+
+```{r}
+
+data_test <- data %>%
+  mutate(fips = paste(state_fips, county_fips, sep = "")) #%>%
+  #group_by(treatment) %>%
+  #summarize(counties=length(unique(fips)))
+  
+```
+
+## Prep data
+
+-   Pre-period: Oct 2020 to July 2021
+-   Post-period: August 2021 to April 2023
+
+```{r}
+
+data_pre <- data %>%
+  filter(date<="2021-07") %>%
+  group_by(treatment) %>%
+  summarize(states=length(unique(state_fips)),
+            counties=length(unique(fips)),
+            laborforce=sum(laborforce_16over[date=="2020-10"]),
+            unemployment_rate=mean(unemployment_rate),
+            unemployment_rate=mean(unemployment_rate),
+            health_spending=mean(health_spending)*100,
+            housing_spending=mean(housing_spending)*100,
+            welfare_spending=mean(welfare_spending)*100,
+            pct_renters=mean(renters_occupied_percentage),
+            pct_black=mean(black_or_african_american_percentage),
+            pct_hispanic=mean(hispanic_or_latino_percentage),
+            pct_bachelors=mean(bachelors_percentage),
+            avg_median_age=mean(median_age),
+            avg_median_income=mean(median_income),
+            covid_cases=sum(monthly_covid_rate)
+            #pct_maskmandate=mean(masks_order_code, na.rm=TRUE)
+            ) %>%
+  rename("States"=states,
+         "Counties"=counties,
+         "Labor Force"=laborforce,
+         "Unemployment Rate"=unemployment_rate,
+         "Share Renters"=pct_renters,
+         "Share Black"=pct_black,
+         "Share Hispanic"=pct_hispanic,
+         "Share College Degree"=pct_bachelors,
+         "Median Age"=avg_median_age,
+         "Median Income"=avg_median_income,
+         "Health Spending"=avg_health_spending,
+         "Housing Spending"=avg_housing_spending,
+         "Welfare Spending"=avg_welfare_spending,
+         "COVID-19 Incidence"=avg_covid_rate
+         #"Portion Mask Mandate"=pct_maskmandate
+         ) %>%
+  select(-"treatment") %>%
+  rotate_df() %>%
+  rename(control_pre=V1, treatment_pre=V2)
+
+data_post <- data %>%
+  filter(date>"2021-07") %>%
+  group_by(treatment) %>%
+  summarize(states=length(unique(state_fips)),
+            counties=length(unique(fips)),
+            laborforce=sum(laborforce_16over[date=="2021-08"]),
+            unemployment_rate=mean(unemployment_rate),
+            avg_health_spending=mean(health_spending)*100,
+            avg_housing_spending=mean(housing_spending)*100,
+            avg_welfare_spending=mean(welfare_spending)*100,
+            pct_renters=mean(renters_occupied_percentage),
+            pct_black=mean(black_or_african_american_percentage),
+            pct_hispanic=mean(hispanic_or_latino_percentage),
+            pct_bachelors=mean(bachelors_percentage),
+            avg_median_age=mean(median_age),
+            avg_median_income=mean(median_income),
+            avg_covid_rate=mean(monthly_covid_rate)
+            #pct_maskmandate=mean(masks_order_code, na.rm=TRUE)
+            ) %>%
+  select(-"treatment") %>%
+  rotate_df() %>%
+  rename(control_post=V1, treatment_post=V2)
+
+
+```
+
+## Merge
+
+```{r}
+
+data_ds <- cbind(data_pre, data_post)
+
+
+```
+
+## gt
+
+```{r}
+#data_tbl <- 
+
+gt(data_ds, rownames_to_stub = TRUE) |>
+cols_align(
+  align = c("center"),
+  columns = 2:5
+  ) |>
+  tab_header(
+    title = html("Table 1.<br>Descriptive Statistics")
+    ) |>
+  tab_spanner(
+    label = "Pre-treatment Period",
+    columns = c(control_pre,treatment_pre)
+  ) |>
+  tab_spanner(
+    label = "Post-treatment Period",
+    columns = c(control_post,treatment_post)
+  ) |>
+  tab_spanner(
+    label = "Average Characteristics",
+    columns = c(1:5)
+  ) |>
+  cols_label(
+    control_pre = html("Control Counties<br>(1)"),
+    treatment_pre = html("Early Treated Counties<br>(2)"),
+    control_post = html("Control Counties<br>(3)"),
+    treatment_post = html("Early Treated Counties<br>(4)")
+  ) |>
+  tab_row_group(
+    label = "D. County-level Characteristics",
+    rows = 8:14
+  ) |>  
+  tab_row_group(
+    label = "C. State-level Characteristics",
+    rows = 5:7
+  ) |>
+  tab_row_group(
+    label = "B. Outcome Variable",
+    rows = 4
+  ) |>
+  tab_row_group(
+    label = "A. Sample Size",
+    rows = 1:3
+  ) |>
+  tab_stub_indent(
+    rows = everything(),
+    indent = 4
+  ) |>
+  tab_source_note(
+    source_note = "
+    Notes: This table displays average characteristics by study group for U.S. counties during the pre-treatment period (October 2020 to July 2021) and post-treatment period (August 2021 to April 2023). Panel A includes a count of unique county-date observations, counties, and states included in the study, along with the corresponding labor force size. Panel B shows differences in our outcome variable, unemployment Rate, across groups and periods. Panel C reports state-level covariate variables, with spending on health, housing, and welfare reported as a percentage of total state spending. Panel D reports county-level covariate variables. Census variables (labor force size, share renters, share black, share Hispanic, share college degree, median age, median income) are 2020 5-Year ACS estimates and do not change across the study period. COVID-19 incidence is reported as the average number of new COVID-19 cases per 100,000 persons in the last 7 days over the period.
+    "
+  ) |>
+  fmt_percent(
+    rows = c(4:11,14),
+    decimals = 2,
+    drop_trailing_zeros = FALSE,
+    drop_trailing_dec_mark = TRUE,
+    scale_values = FALSE,
+    use_seps = TRUE,
+    accounting = FALSE,
+    pattern = "{x}",
+    sep_mark = ",",
+    dec_mark = ".",
+    force_sign = FALSE,
+    placement = "right",
+    incl_space = FALSE,
+    system = c("intl", "ind"),
+    locale = NULL
+  ) |>
+  fmt_number(
+    rows = c(1:3,14),
+    decimals = 0,
+    n_sigfig = NULL,
+    drop_trailing_zeros = FALSE,
+    drop_trailing_dec_mark = TRUE,
+    use_seps = TRUE,
+    accounting = FALSE,
+    scale_by = 1,
+    suffixing = FALSE,
+    pattern = "{x}",
+    sep_mark = ",",
+    dec_mark = ".",
+    force_sign = FALSE,
+    system = c("intl", "ind"),
+    locale = NULL
+  ) |>
+  fmt_number(
+    rows = c(12),
+    decimals = 2,
+    n_sigfig = NULL,
+    drop_trailing_zeros = FALSE,
+    drop_trailing_dec_mark = TRUE,
+    use_seps = TRUE,
+    accounting = FALSE,
+    scale_by = 1,
+    suffixing = FALSE,
+    pattern = "{x}",
+    sep_mark = ",",
+    dec_mark = ".",
+    force_sign = FALSE,
+    system = c("intl", "ind"),
+    locale = NULL
+  ) |>
+  fmt_currency(
+    rows = c(13),
+    currency = NULL,
+    use_subunits = TRUE,
+    decimals = 0,
+    drop_trailing_dec_mark = TRUE,
+    use_seps = TRUE,
+    accounting = FALSE,
+    scale_by = 1,
+    suffixing = FALSE,
+    pattern = "{x}",
+    sep_mark = ",",
+    dec_mark = ".",
+    force_sign = FALSE,
+    placement = "left",
+    incl_space = FALSE,
+    system = c("intl", "ind"),
+    locale = NULL) |>
+sub_values(
+  columns = c(4:5),
+  rows = c(1:3,5:13),
+  values = NULL,
+  pattern = ".",
+  fn = NULL,
+  replacement = "x",
+  escape = TRUE
+)
+  #gtsave("ds_table.png", expand = 10)
+```
+
+## Example code
+
+```{r}
+
+  datatable(rownames = c("Number of States", 
+                         "Number of Counties",
+                         "Size of Labor Force",
+                                "Unemployment Rate",
+                                "Share Renters",
+                                "Share Black",
+                                "Share Hispanic",
+                                "Share with College Degree",
+                                "Average Median Age",
+                                "Average Medican Income",
+                                "Health Spending",
+                                "Housing Spending",
+                                "Welfare Spending",
+                                "Average COVID-19 Rate",
+                                "Percent of Period with Mask Mandate"
+                                ),
+          colname = c("Treatment Group"))
+
+
+
+
+
+
+hvs21_hh_svy %>% 
+  group_by(policy) %>% 
+  summarize(across(starts_with("hh_"), ~ srvyr::survey_mean(.x, na.rm=T))) %>% 
+  select(-ends_with("se")) %>% 
+  transmute(policy, 
+            `% of HHs with senior` = hh_senior,
+            `% of HHs with child under 18` = hh_under18,
+            `% of HHs with child under 6` = hh_under6,
+            `% of HHs receiving food assist` = hh_pa_food,
+            `% of HHs receiving cash assist` = hh_pa_cash,
+            `% of HHs receiving rental assist` = hh_rent_assist, 
+            `% of HHs receiving other assist` = hh_pa_other,
+            `Mean HH Income` = hh_inc) %>% 
+  datatable() %>% 
+  formatPercentage(2:8, 
+                   digits = 1) %>% 
+    formatCurrency("Mean HH Income", 
+                 digits = 0)
+```

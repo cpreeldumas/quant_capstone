@@ -41,9 +41,12 @@ covariates_laborforce <- read_csv("~/Google Drive/My Drive/_Wagner/2024-01/Capst
 ## Load tidycensus data
 
 ```{r}
-covariates_census <- read_csv("~/Documents/Coding Projects/quant_capstone/data_raw/covariates_census_v8.csv") %>%
-  rename(state_fips=GEOID, county_fips=GEOID2)
+covariates_census <- read_csv("~/Documents/Coding Projects/quant_capstone/data_raw/covariates_census_v9.csv") %>%
+  separate(GEOID, into = c("state_fips", "county_fips"), -3) %>%
+  rename(county=NAME)
 
+
+summary(covariates_census)
 ```
 
 ## Load BLS data
@@ -72,8 +75,9 @@ BLS_seas <- read_csv("~/Documents/Coding Projects/quant_capstone/data_raw/BLS_se
 ```{r}
 
 data <- left_join(BLS_seas, BLS_data, by = c("date", "county_fips", "state_fips"))
-data2 <- left_join(data, covariates_laborforce,  by = c("state_fips", "county_fips"))
-data3 <- left_join(data2, covariates_census,  by = c("state_fips", "county_fips"))
+data2 <- left_join(data, covariates_covid_statespend, by = c("date", "county_fips", "state_fips"))
+data3 <- left_join(data2, covariates_laborforce,  by = c("state_fips", "county_fips"))
+data4 <- left_join(data3, covariates_census,  by = c("county"))
 
 
 ```
@@ -82,15 +86,15 @@ data3 <- left_join(data2, covariates_census,  by = c("state_fips", "county_fips"
 
 ```{r}
 
-data4 <- data3 %>%
-  select(-delete, -county, -24, -41)
+data5 <- data4 %>%
+  select(-20, -30, -34, -35)
 ```
 
 ## Export data
 
 ```{r}
 
-write.csv(data4, "~/Documents/Coding Projects/quant_capstone/data_clean/data_v3.csv", row.names=FALSE)
+write.csv(data5, "~/Documents/Coding Projects/quant_capstone/data_clean/data_v4.csv", row.names=FALSE)
 
 ```
 

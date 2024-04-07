@@ -112,7 +112,7 @@ C15002I_005
 
 
 
-covariate_data2$Owners_plus_renters<-rowSums(covariate_data2[18:19])
+covariate_data2$Owners_plus_renters<-rowSums(covariate_data2[19:20])
 
 # Create fractions
 covariate_data2$Renters_occupied_percentage <- covariate_data2$Renter_occupied/ covariate_data2$Owners_plus_renters*100
@@ -148,6 +148,78 @@ covariate_data2$Two_or_more_races<- NULL
 covariate_data2$White_alone_not_hispanic_or_latino<- NULL
 covariate_data2$Males<-NULL
 covariate_data2$Females<-NULL
+#Enter Land Area from Cencus
+
+install.packages("tidyr")
+library(tidyr)
+
+install.packages("stringr")
+library(stringr)
+
+setwd("C:/Users/mandy/OneDrive/Desktop/New folder/NYU Classes/Quantitative Capstone/Covariates")
+dir()
+
+LandArea <- read.csv("LandArea2.csv",stringsAsFactors=TRUE)
+View(LandArea)
+
+
+LandArea$LND010190F<-NULL
+LandArea$LND010190D<-NULL
+LandArea$LND010190N1<-NULL
+LandArea$LND010190N2<-NULL
+LandArea$LND010200F<-NULL
+LandArea$LND010200D<-NULL
+LandArea$LND010200N1<-NULL
+LandArea$LND010200N2<-NULL
+LandArea$LND110180F<-NULL
+LandArea$LND110180D<-NULL
+LandArea$LND110180N1<-NULL
+LandArea$LND110180N2<-NULL
+LandArea$LND110190F<-NULL
+LandArea$LND110190D<-NULL
+LandArea$LND110190N1<-NULL
+LandArea$LND110190N2<-NULL
+LandArea$LND110200F<-NULL
+LandArea$LND110200N1<-NULL
+LandArea$LND110200N2<-NULL
+LandArea$LND110200D<-NULL
+LandArea$LND110210F<-NULL
+LandArea$LND110210N1<-NULL
+LandArea$LND110210N2<-NULL
+LandArea$LND210190F<-NULL
+LandArea$LND210190D<-NULL
+LandArea$LND210190N1<-NULL
+LandArea$LND210190N2<-NULL
+LandArea$LND210200F<-NULL
+LandArea$LND210200N2<-NULL
+LandArea$LND210200N1<-NULL
+LandArea$LND210200D<-NULL
+
+
+
+
+#JOIN both datasets
+names(LandArea)[1:3]<-c('Areaname','GEOID','Land_Area')
+
+LandArea$GEOID<- as.numeric(LandArea$GEOID)
+class(LandArea$GEOID)
+
+covariate_data2$GEOID<-as.numeric(covariate_data2$GEOID)
+class(covariate_data2$GEOID)
+
+
+
+covariate_data5<-left_join(
+  covariate_data2,
+  LandArea,
+  by = "GEOID",
+  copy = FALSE,
+  keep = NULL)
+
+
+
+
+
 
 #get_acs for state level population then merge 
 state_population <- get_acs(geography = c("state"),
@@ -169,23 +241,35 @@ state_population2<-state_population %>%
 library(tidyverse)
 
 covariate_data3<- separate(
-  data= covariate_data2,
+  data= covariate_data5,
   col= "GEOID",
   into= c("GEOID", "GEOID2"),
-  sep = +2,
+  sep = +1,
   remove = TRUE,
   convert = FALSE,
   extra = "warn",
   fill = "warn",
 )
 
-covariates_joined<-full_join(
+
+#Now Join with state population
+
+state_population2$GEOID<-as.numeric(state_population2$GEOID)
+covariate_data3$GEOID<-as.numeric(covariate_data3$GEOID)
+
+
+covariates_joined2<-full_join(
   covariate_data3,
   state_population2,
   by = "GEOID",
   copy = FALSE,
   suffix = c(". County_Covariate_Data3", ". State_Population2"),
   keep = NULL)
+
+
+
+
+
 
 
 setwd("C:/Users/mandy/OneDrive/Desktop/New folder/NYU Classes/Quantitative Capstone/Covariates/2020")
