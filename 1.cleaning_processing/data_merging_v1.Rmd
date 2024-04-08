@@ -41,12 +41,11 @@ covariates_laborforce <- read_csv("~/Google Drive/My Drive/_Wagner/2024-01/Capst
 ## Load tidycensus data
 
 ```{r}
-covariates_census <- read_csv("~/Documents/Coding Projects/quant_capstone/data_raw/covariates_census_v9.csv") %>%
+covariates_census <- read_csv("~/Documents/Coding Projects/quant_capstone/data_raw/covariates_census_v10.csv") %>%
   separate(GEOID, into = c("state_fips", "county_fips"), -3) %>%
   rename(county=NAME)
 
 
-summary(covariates_census)
 ```
 
 ## Load BLS data
