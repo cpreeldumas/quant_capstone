@@ -33,7 +33,7 @@ data_ds <- read_csv("~/Documents/Coding Projects/quant_capstone/data_clean/data_
          state=state_x
          ) %>%
   filter(date>="2020-10" & date<="2023-04") %>% # Study Period: Oct 2020 - April 2023
-  filter(state_fips <= "56" & state_fips != "11" & county != "Bailey County, Texas") %>% # Remove PR, Guam, Virgin Islands, DC, Bailey County TX
+  filter(state_fips <= "56" & state_fips != "11" & state_fips != 15 & county != "Bailey County, Texas") %>% # Remove PR; Guam; Virgin Islands; DC; Bailey County TX; Hawaii
   mutate(masks_order_code = as.numeric(masks_order_code)) %>%
   mutate(fips = paste(state_fips, county_fips, sep = ""))
 
@@ -43,10 +43,11 @@ data_ds <- read_csv("~/Documents/Coding Projects/quant_capstone/data_clean/data_
 
 ```{r}
 
-data_test <- data %>%
-  mutate(fips = paste(state_fips, county_fips, sep = "")) #%>%
-  #group_by(treatment) %>%
-  #summarize(counties=length(unique(fips)))
+data_test <- data_ds %>%
+  filter(date<="2021-07") %>%
+  group_by(treatment) %>%
+  summarize(avg_median_income=mean(median_income))
+
   
 ```
 
@@ -73,8 +74,8 @@ data_pre <- data_ds %>%
             pct_hispanic=mean(hispanic_or_latino_percentage),
             pct_bachelors=mean(bachelors_percentage),
             avg_median_age=mean(median_age),
-           # avg_median_income=mean(median_income),
-            covid_cases=sum(monthly_covid_rate)
+            avg_median_income=mean(median_income, na.rm=TRUE),
+            covid_cases=mean(monthly_covid_rate)
             #pct_maskmandate=mean(masks_order_code, na.rm=TRUE)
             ) %>%
   rename("States"=states,
@@ -86,7 +87,7 @@ data_pre <- data_ds %>%
          "Share Hispanic"=pct_hispanic,
          "Share College Degree"=pct_bachelors,
          "Median Age"=avg_median_age,
-         #"Median Income"=avg_median_income,
+         "Median Household Income"=avg_median_income,
          "Health Spending"=avg_health_spending,
          "Housing Spending"=avg_housing_spending,
          "Welfare Spending"=avg_welfare_spending,
@@ -112,8 +113,8 @@ data_post <- data_ds %>%
             pct_hispanic=mean(hispanic_or_latino_percentage),
             pct_bachelors=mean(bachelors_percentage),
             avg_median_age=mean(median_age),
-            #avg_median_income=mean(median_income),
-            covid_cases=sum(monthly_covid_rate)
+            avg_median_income=mean(median_income, na.rm=TRUE),
+            covid_cases=mean(monthly_covid_rate)
             #pct_maskmandate=mean(masks_order_code, na.rm=TRUE)
             ) %>%
   select(-"treatment") %>%
@@ -123,7 +124,10 @@ data_post <- data_ds %>%
 
 ```
 
-## Merge
+## Merge and update
+
+data.frame[row_number, column_number] = new_value
+
 
 ```{r}
 
@@ -185,7 +189,7 @@ cols_align(
   ) |>
   tab_source_note(
     source_note = "
-    Notes: This table displays average characteristics by study group for U.S. counties during the pre-treatment period (October 2020 to July 2021) and post-treatment period (August 2021 to April 2023). Panel A includes a count of unique county-date observations, counties, and states included in the study, along with the corresponding labor force size. Panel B shows differences in our outcome variable, Unemployment Rate, across groups and periods. Panel C reports state-level covariate variables, with spending on health, housing, and welfare reported as a percentage of total state spending. Panel D reports county-level covariate variables. Census variables (labor force size, share renters, share black, share Hispanic, share college degree, median age, median income) are 2020 5-Year ACS estimates and do not change across the study period. COVID-19 incidence is reported as the average number of new COVID-19 cases per 100,000 persons over the period.
+    Notes: This table displays average characteristics by study group for U.S. counties during the pre-treatment period (October 2020 to July 2021) and post-treatment period (August 2021 to April 2023). Panel A includes a count of counties and states included in the study, along with the corresponding labor force size. Panel B shows differences in our outcome variable, Unemployment Rate, across groups and periods. Panel C reports state-level covariate variables, with spending on health, housing, and welfare reported as a percentage of total state spending. Panel D reports county-level covariate variables. Census variables (labor force size, share renters, share black, share Hispanic, share college degree, median age, median income) are 2020 5-Year ACS estimates and do not change across the study period. COVID-19 incidence is reported as the average number of new COVID-19 cases per 100,000 persons over the period.
     "
   ) |>
   fmt_percent(
@@ -263,10 +267,10 @@ sub_values(
   values = NULL,
   pattern = ".",
   fn = NULL,
-  replacement = "x",
+  replacement = "-",
   escape = TRUE
-)
-  #gtsave("ds_table.png", expand = 10)
+) %>%
+  gtsave("ds_table.png", expand = 10)
 ```
 
 ## Example code
