@@ -221,6 +221,33 @@ covariate_data5$Land_Area<-NULL
 
 
 
+#Try out geometry method for land area
+#https://www.census.gov/quickfacts/fact/note/US/POP060210
+
+library(tidycensus)
+library(tidyverse)
+
+options(tigris_use_cache = TRUE)
+install.packages(c("tidycensus", "sf", "dplyr"))
+library(tidycensus)
+library(sf)
+library(dplyr)
+
+orange <- get_acs(
+  geography = "county",
+  variables = "B19013_001",
+  geometry = TRUE,
+  year = 2022
+)
+
+view(orange)
+
+orange <- orange %>%
+  mutate(area = st_area(.))
+
+view(orange)
+
+
 
 #get_acs for state level population then merge 
 state_population <- get_acs(geography = c("state"),
