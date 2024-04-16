@@ -93,11 +93,9 @@ C15002I_010
 C15002I_005
 
 
-
-
-
-
 #continuation from detour 
+
+
   covariate_data$moe<- NULL
   
   library(tidyverse)
@@ -108,8 +106,6 @@ C15002I_005
     values_from = estimate,
     values_fill = 0
   )
-
-
 
 
 covariate_data2$Owners_plus_renters<-rowSums(covariate_data2[19:20])
@@ -148,7 +144,9 @@ covariate_data2$Two_or_more_races<- NULL
 covariate_data2$White_alone_not_hispanic_or_latino<- NULL
 covariate_data2$Males<-NULL
 covariate_data2$Females<-NULL
-#Enter Land Area from Cencus
+
+
+#Enter Land Area from Census
 
 install.packages("tidyr")
 library(tidyr)
@@ -237,16 +235,62 @@ orange <- get_acs(
   geography = "county",
   variables = "B19013_001",
   geometry = TRUE,
-  year = 2022
+  year = 2020
 )
-
-view(orange)
 
 orange <- orange %>%
   mutate(area = st_area(.))
 
 view(orange)
 
+
+covariate_data8<-left_join(
+  covariate_data2,
+  orange,
+  by = "GEOID",
+  copy = FALSE,
+  keep = NULL)
+
+covariate_data8$variable<-NULL
+covariate_data8$estimate<-NULL
+covariate_data8$moe<-NULL
+covariate_data8$geometry<-NULL
+
+#convert to square miles ??
+
+covariate_data8$NAME.y<-NULL
+
+
+
+covariate_data8$popul_density<-covariate_data8$Total_population/covariate_data8$area
+covariate_data8$Land_Area<-NULL
+
+#me trying unsuccessfully to find where the missing values. Finally I had to find th Connecticut region manually and tediously
+covariate_data7$Males[which(covariate_data7$Males == -1 )] <- NA
+covariate_data7$Males
+
+is.na(health$age)
+table(is.na(health$age))
+
+
+empty_in_B <- covariate_data7$Males == ""
+print(covariate_data7[empty_in_B, ])
+empty<- row(isFALSE(empty_in_B))
+
+
+
+row_3222<-covariate_data7[3222, ]
+print(row_3222)
+
+
+
+missing<- colSums(is.na(covariate_data7))
+missing2<- rowSums(is.na(covariate_data7))
+
+rows_with_na <- !complete.cases(covariate_data7)
+
+
+df <- data.frame(covariate_data7$Males = c("data", "", "more data", "", "end"))
 
 
 #get_acs for state level population then merge 
@@ -299,10 +343,10 @@ covariates_joined2<-full_join(
 
 
 
-
+covariate_data8$NAME.y<-NULL
 setwd("C:/Users/mandy/OneDrive/Desktop/New folder/NYU Classes/Quantitative Capstone/Covariates/2020")
 library(readr)
-write_csv(covariate_data5, 'covariates_census_v10')
+write_csv(covariate_data8, 'covariates_census_v11')
 
 %USERPROFILE%\AppData\Local\RStudio-Desktop\sources
 history(Inf)
