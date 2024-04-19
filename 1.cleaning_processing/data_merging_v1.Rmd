@@ -41,9 +41,9 @@ covariates_laborforce <- read_csv("~/Google Drive/My Drive/_Wagner/2024-01/Capst
 ## Load tidycensus data
 
 ```{r}
-covariates_census <- read_csv("~/Documents/Coding Projects/quant_capstone/data_raw/covariates_census_v10.csv") %>%
+covariates_census <- read_csv("~/Documents/Coding Projects/quant_capstone/data_raw/covariates_census_v13.csv") %>%
   separate(GEOID, into = c("state_fips", "county_fips"), -3) %>%
-  rename(county=NAME)
+  rename(county=NAME.x)
 
 
 ```
@@ -61,9 +61,8 @@ BLS_data <- read_csv("~/Documents/Coding Projects/quant_capstone/data_raw/BLS_co
 ## Load Seasonally Adjusted BLS data
 
 ```{r}
-BLS_seas <- read_csv("~/Documents/Coding Projects/quant_capstone/data_raw/BLS_seas_v1.csv") %>%
+BLS_seas <- read_csv("~/Documents/Coding Projects/quant_capstone/data_raw/BLS_seas_v3.csv") %>%
   mutate(date = format(date, '%Y-%m')) %>%
-  rename(Unemployment_Rate_S=Unemployment_Rate) %>%
   separate(FIPS, into = c("state_fips", "county_fips"), -3) %>%
   filter(date >= "2020-07") 
 
