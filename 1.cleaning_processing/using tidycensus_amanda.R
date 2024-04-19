@@ -17,7 +17,7 @@ v20 <- load_variables(2020, "acs5", cache = TRUE)
 #B06009_005, Estimate!!Total:!!Bachelor's degree, PLACE OF BIRTH BY EDUCATIONAL ATTAINMENT IN THE UNITED STATES, tract
 #B06009_002, Estimate!!Total:!!Less than high school graduate, PLACE OF BIRTH BY EDUCATIONAL ATTAINMENT IN THE UNITED STATES, tract
 #B06009_003, Estimate!!Total:!!High school graduate (includes equivalency), PLACE OF BIRTH BY EDUCATIONAL ATTAINMENT IN THE UNITED STATES, tract
-
+#B19049_001
 #B01002_001,Estimate!!Median age --!!Total: MEDIAN AGE BY SEX, block group
 #B06011_001, Estimate!!Median income in the past 12 months --!!Total:MEDIAN INCOME IN THE PAST 12 MONTHS (IN 2020 INFLATION ADJUSTED DOLLARS)BYPLACE OF BIRTH IN THE UNITED STATES; tract
 #B07411_002, Estimate!!Median income in the past 12 months --!!Total living in area 1 year ago:!!Same house, MEDIAN INCOME IN THE PAST 12 MONTHS (IN 2020 INFLATION-ADJUSTED DOLLARS) BY GEOGRAPHICAL MOBILITY IN THE PAST YEAR FOR RESIDENCE 1 YEAR AGO IN THE UNITED STATES
@@ -55,6 +55,7 @@ covariate_data <- get_acs(geography = c("county"),
                                         Renter_occupied="B07013_003",
                                         Owner_occupied="B07013_002",
                                         Median_age="B01002_001",
+                                        Median_income= "B19049_001",
                                         Females="B01001_026",
                                         Males= "B01001_002",
                                         Total_population="B01003_001", 
@@ -145,8 +146,81 @@ covariate_data2$White_alone_not_hispanic_or_latino<- NULL
 covariate_data2$Males<-NULL
 covariate_data2$Females<-NULL
 
+#Try out geometry method for land area
+#https://www.census.gov/quickfacts/fact/note/US/POP060210
 
-#Enter Land Area from Census
+library(tidycensus)
+library(tidyverse)
+
+options(tigris_use_cache = TRUE)
+install.packages(c("tidycensus", "sf", "dplyr"))
+library(tidycensus)
+library(sf)
+library(dplyr)
+
+LA <- get_acs(
+  geography = "county",
+  variables = "B01003_001",
+  geometry = TRUE,
+  year = 2020
+)
+
+LA <- LA %>%
+  mutate(area = st_area(.))
+
+view(LA)
+
+
+covariate_data8<-left_join(
+  covariate_data2,
+  LA,
+  by = "GEOID",
+  copy = FALSE,
+  keep = NULL)
+
+covariate_data8$variable<-NULL
+covariate_data8$estimate<-NULL
+covariate_data8$moe<-NULL
+covariate_data8$geometry<-NULL
+
+#convert to square miles ??
+
+covariate_data8$NAME.y<-NULL
+
+
+
+covariate_data8$popul_density<-covariate_data8$Total_population/covariate_data8$area
+covariate_data8$Land_Area<-NULL
+
+#detour of me trying unsuccessfully to find where the missing values. Finally I had to find th Connecticut region manually and tediously
+covariate_data7$Males[which(covariate_data7$Males == -1 )] <- NA
+covariate_data7$Males
+
+is.na(health$age)
+table(is.na(health$age))
+
+
+empty_in_B <- covariate_data7$Males == ""
+print(covariate_data7[empty_in_B, ])
+empty<- row(isFALSE(empty_in_B))
+
+
+
+row_3222<-covariate_data7[3222, ]
+print(row_3222)
+
+
+
+missing<- colSums(is.na(covariate_data7))
+missing2<- rowSums(is.na(covariate_data7))
+
+rows_with_na <- !complete.cases(covariate_data7)
+
+
+df <- data.frame(covariate_data7$Males = c("data", "", "more data", "", "end"))
+
+
+#Try out method of Enter Land Area from Census although this land area is as of 2011
 
 install.packages("tidyr")
 library(tidyr)
@@ -219,79 +293,6 @@ covariate_data5$Land_Area<-NULL
 
 
 
-#Try out geometry method for land area
-#https://www.census.gov/quickfacts/fact/note/US/POP060210
-
-library(tidycensus)
-library(tidyverse)
-
-options(tigris_use_cache = TRUE)
-install.packages(c("tidycensus", "sf", "dplyr"))
-library(tidycensus)
-library(sf)
-library(dplyr)
-
-orange <- get_acs(
-  geography = "county",
-  variables = "B19013_001",
-  geometry = TRUE,
-  year = 2020
-)
-
-orange <- orange %>%
-  mutate(area = st_area(.))
-
-view(orange)
-
-
-covariate_data8<-left_join(
-  covariate_data2,
-  orange,
-  by = "GEOID",
-  copy = FALSE,
-  keep = NULL)
-
-covariate_data8$variable<-NULL
-covariate_data8$estimate<-NULL
-covariate_data8$moe<-NULL
-covariate_data8$geometry<-NULL
-
-#convert to square miles ??
-
-covariate_data8$NAME.y<-NULL
-
-
-
-covariate_data8$popul_density<-covariate_data8$Total_population/covariate_data8$area
-covariate_data8$Land_Area<-NULL
-
-#me trying unsuccessfully to find where the missing values. Finally I had to find th Connecticut region manually and tediously
-covariate_data7$Males[which(covariate_data7$Males == -1 )] <- NA
-covariate_data7$Males
-
-is.na(health$age)
-table(is.na(health$age))
-
-
-empty_in_B <- covariate_data7$Males == ""
-print(covariate_data7[empty_in_B, ])
-empty<- row(isFALSE(empty_in_B))
-
-
-
-row_3222<-covariate_data7[3222, ]
-print(row_3222)
-
-
-
-missing<- colSums(is.na(covariate_data7))
-missing2<- rowSums(is.na(covariate_data7))
-
-rows_with_na <- !complete.cases(covariate_data7)
-
-
-df <- data.frame(covariate_data7$Males = c("data", "", "more data", "", "end"))
-
 
 #get_acs for state level population then merge 
 state_population <- get_acs(geography = c("state"),
@@ -346,7 +347,12 @@ covariates_joined2<-full_join(
 covariate_data8$NAME.y<-NULL
 setwd("C:/Users/mandy/OneDrive/Desktop/New folder/NYU Classes/Quantitative Capstone/Covariates/2020")
 library(readr)
-write_csv(covariate_data8, 'covariates_census_v11')
+write_csv(covariate_data8, 'covariates_census_v13')
+
+
+
+
+
 
 %USERPROFILE%\AppData\Local\RStudio-Desktop\sources
 history(Inf)
