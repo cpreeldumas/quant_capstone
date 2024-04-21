@@ -34,8 +34,11 @@ library(stargazer)
 library(sjPlot)
 
 #import data
-bls_data <- read_csv("/Users/cpreeldumas/Documents/GitHub/quant_capstone/data_clean/data_v2.csv") %>% 
-  clean_names("snake") #convert column names to snake case
+bls_data <- read_csv("/Users/cpreeldumas/Documents/GitHub/quant_capstone/data_clean/data_v4.csv") %>% 
+  clean_names("snake") %>% #convert column names to snake case
+  rename(state_fips = state_fips_x,
+         county_fips = county_fips_x,
+         state = state_x) 
 
 glimpse(bls_data)
 ```
@@ -142,7 +145,11 @@ bls_data_did_nodc %>%
   tally()
 
 bls_data_did_nodc %>% 
-  group_by(treatment, first_treat, federal_end, state_end) %>% tally()
+  group_by(first_treat, state) %>% tally()
+
+bls_data_did_nodc %>% 
+  group_by(date, new_year_mo) %>% 
+  tally()
 
 obs_by_group <- bls_data_did_nodc %>% 
   group_by(first_treat) %>% 
@@ -159,7 +166,9 @@ bls_data_did_nodc %>%
 bls_data_did_nodc %>% group_by(treatment, state) %>% tally()
 #illinois
 
-bls_data_did_nodc %>% filter(state == "IL")
+bls_data_did_nodc %>% 
+  group_by(countyname, popul_density) %>% 
+  tally()
 ```
 
 
@@ -348,7 +357,7 @@ bls_data_did_nodc %>% group_by(date, new_year_mo) %>% tally()
 
 #### Group-time average treatment effects
 ```{r}
-attgt_nocovar <- att_gt(yname = "unemployment_rate",
+attgt_nocovar <- att_gt(yname = "unemployment_rate_s",
                    gname = "first_treat",
                    idname = "idname",
                    tname = "new_year_mo",
@@ -361,6 +370,8 @@ attgt_nocovar <- att_gt(yname = "unemployment_rate",
                      hispanic_or_latino_percentage +
                      laborforce_16over 
                      
+                     #popul_density
+                     
                      #health_spending  
                      #housing_spending  
                      #welfare_spending 
@@ -368,7 +379,7 @@ attgt_nocovar <- att_gt(yname = "unemployment_rate",
                      #pretreat_maskmandate_pct 
                      ,
                    control_group = "notyettreated",
-                   #anticipation = 0.166,
+                   anticipation = 0.166,
                    data = bls_data_did_nodc)
 
 summary(attgt_nocovar)
@@ -382,7 +393,7 @@ att_plot <- ggdid(attgt_nocovar, ylab = "ATT") +
                                 "2022-10", 
                                 "2023-03"))
 
-ggsave(filename = "att_plot.png",
+ggsave(filename = "att_plot_anticipation.png",
        plot = att_plot,
        path = "/Users/cpreeldumas/Desktop/SPRING 2024/Capstone/plots/")
 
