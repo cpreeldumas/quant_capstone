@@ -21,6 +21,7 @@ library(tibble)
 ## Seasonal Adjustment
 
 * https://github.com/christophsax/seasonal
+* https://cran.r-project.org/web/packages/seasonal/vignettes/multiple.html
 * https://github.com/angusmoore/seasthedata
 
 ## Load data - 2015+
@@ -51,6 +52,23 @@ data2 <- read_csv("~/Documents/Coding Projects/quant_capstone/data_raw/BLS_count
 
 data_seas1<- seasthedata(data1)
 
+```
+
+## Adjust data - Outlier detection: 5
+
+```{r}
+
+data_seas2 <- seasthedata(data1,
+                          outlier.critical = 5)
+
+```
+
+## Adjust data - Outlier detection: Low
+
+```{r}
+
+data_seas3 <- seasthedata(data1,
+                          outlier.critical = 4)
 ```
 ## Explore data
 
