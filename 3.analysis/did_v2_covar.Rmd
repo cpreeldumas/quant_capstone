@@ -41,13 +41,6 @@ bls_data <- read_csv("/Users/cpreeldumas/Documents/GitHub/quant_capstone/data_cl
 glimpse(bls_data)
 ```
 
-# Initial Exploration Phase
-
-This is a second pass at using the CS-DID package. Next steps include:
-
-1. Adding anticipatory effects (if any) - might need to test the other deadlines that got pushed (to test how solid the anticipation is). Fir ex: moratorium is initially set to expire in March, then it's pushed in February a few months, we should already be seeing effect in Jan and Feb.
-2. Testing whether seasonality poses a threat
-
 # Methodology decisions
 
 1. Study period: July 2020 - April 2023 (expiration of MA moratorium)
@@ -362,6 +355,7 @@ unemployment_rate_sa_auto:outlier detection set at auto (which we've already tri
 unemployment_rate_sa_5: outlier detection increased to 5 (max)
 unemployment_rate_sa_4: outlier detection increased to 4 
 
+##### Base Model
 ```{r}
 attgt_nocovar <- att_gt(yname = "unemployment_rate",
                    gname = "first_treat",
@@ -374,9 +368,9 @@ attgt_nocovar <- att_gt(yname = "unemployment_rate",
                      bachelors_percentage +
                      black_or_african_american_percentage + 
                      hispanic_or_latino_percentage +
-                     laborforce_16over +
+                     laborforce_16over 
                      
-                     popul_density
+                     #popul_density
                      
                      #health_spending  
                      #housing_spending  
@@ -385,7 +379,7 @@ attgt_nocovar <- att_gt(yname = "unemployment_rate",
                      #pretreat_maskmandate_pct 
                      ,
                    control_group = "notyettreated",
-                   anticipation = 0.166,
+                   #anticipation = 0.166,
                    data = bls_data_did_nodc)
 
 summary(attgt_nocovar)
@@ -403,11 +397,6 @@ ggsave(filename = "att_plot_anticipation.png",
        plot = att_plot,
        path = "/Users/cpreeldumas/Desktop/SPRING 2024/Capstone/plots/")
 
-bls_data_did_nodc %>% distinct(date) %>% pull()
-```
-
-### Aggregate 
-```{r}
 # aggregate the group-time average treatment effects
 attgt_nocovar_dyn <- aggte(attgt_nocovar, type = "dynamic")
 summary(attgt_nocovar_dyn)
@@ -415,12 +404,144 @@ summary(attgt_nocovar_dyn)
 ggdid(attgt_nocovar_dyn) +
   scale_x_continuous(name = "Length of Exposure to Moratorium Lift")
 
-tidy_attgt_nocovar_dyn <- tidy(attgt_nocovar_dyn) %>%
-  mutate(`Significance`= stars.pval(p.value))
-
-write.table(tidy_attgt_nocovar_dyn, "/Users/cpreeldumas/Desktop/SPRING 2024/Capstone/interim report/attgt_nocovar_dyn.txt", sep = "\t", row.names = FALSE, quote = FALSE)
+base_att <- tibble(model = "Base",
+       ATT = attgt_nocovar_dyn$overall.att, 
+       se = attgt_nocovar_dyn$overall.se, 
+       conf_min = ATT - (se*1.96), 
+       conf_max = ATT + (se*1.96),
+       p_val = "*")
 ```
 
-# Issues so far
 
-1. Large standard errors
+##### Base Model + Anticipation
+```{r}
+attgt_nocovar_ant <- att_gt(yname = "unemployment_rate",
+                   gname = "first_treat",
+                   idname = "idname",
+                   tname = "new_year_mo",
+                   clustervars = "idname",
+                   allow_unbalanced_panel = TRUE,
+                   xformla = ~ 
+                     renters_occupied_percentage +
+                     bachelors_percentage +
+                     black_or_african_american_percentage + 
+                     hispanic_or_latino_percentage +
+                     laborforce_16over 
+                     
+                     #popul_density
+                     
+                     #health_spending  
+                     #housing_spending  
+                     #welfare_spending 
+                     #pretreat_covid_rate  
+                     #pretreat_maskmandate_pct 
+                     ,
+                   control_group = "notyettreated",
+                   anticipation = 0.166,
+                   data = bls_data_did_nodc)
+
+summary(attgt_nocovar_ant)
+att_plot_ant <- ggdid(attgt_nocovar_ant, ylab = "ATT") +
+  scale_x_continuous(name = "Date",
+                     breaks=c(1, 7, 13, 19, 25, 30), 
+                     labels = c("2020-10",
+                                "2021-04", 
+                                "2021-10", 
+                                "2022-04", 
+                                "2022-10", 
+                                "2023-03"))
+
+ggsave(filename = "att_plot_anticipation.png",
+       plot = att_plot_ant,
+       path = "/Users/cpreeldumas/Desktop/SPRING 2024/Capstone/plots/")
+
+# aggregate the group-time average treatment effects
+attgt_nocovar_dyn_ant <- aggte(attgt_nocovar_ant, type = "dynamic")
+summary(attgt_nocovar_dyn_ant)
+
+ggdid(attgt_nocovar_dyn_ant) +
+  scale_x_continuous(name = "Length of Exposure to Moratorium Lift")
+
+ant_att <- tibble(model = "2 Month Anticipation",
+       ATT = attgt_nocovar_dyn_ant$overall.att, 
+       se = attgt_nocovar_dyn_ant$overall.se, 
+       conf_min = ATT - (se*1.96), 
+       conf_max = ATT + (se*1.96),
+       p_val = "*")
+
+```
+
+
+
+##### Base Model + Anticipation + Seasonal Adjustment
+```{r}
+attgt_nocovar_ant_sa <- att_gt(yname = "unemployment_rate_sa_5",
+                   gname = "first_treat",
+                   idname = "idname",
+                   tname = "new_year_mo",
+                   clustervars = "idname",
+                   allow_unbalanced_panel = TRUE,
+                   xformla = ~ 
+                     renters_occupied_percentage +
+                     bachelors_percentage +
+                     black_or_african_american_percentage + 
+                     hispanic_or_latino_percentage +
+                     laborforce_16over 
+                     
+                     #popul_density
+                     
+                     #health_spending  
+                     #housing_spending  
+                     #welfare_spending 
+                     #pretreat_covid_rate  
+                     #pretreat_maskmandate_pct 
+                     ,
+                   control_group = "notyettreated",
+                   anticipation = 0.166,
+                   data = bls_data_did_nodc)
+
+summary(attgt_nocovar_ant_sa)
+att_plot_ant_sa <- ggdid(attgt_nocovar_ant_sa, ylab = "ATT") +
+  scale_x_continuous(name = "Date",
+                     breaks=c(1, 7, 13, 19, 25, 30), 
+                     labels = c("2020-10",
+                                "2021-04", 
+                                "2021-10", 
+                                "2022-04", 
+                                "2022-10", 
+                                "2023-03"))
+
+ggsave(filename = "att_plot_anticipation_sa.png",
+       plot = att_plot_ant_sa,
+       path = "/Users/cpreeldumas/Desktop/SPRING 2024/Capstone/plots/")
+
+# aggregate the group-time average treatment effects
+attgt_nocovar_dyn_ant_sa <- aggte(attgt_nocovar_ant_sa, type = "dynamic")
+summary(attgt_nocovar_dyn_ant_sa)
+
+ggdid(attgt_nocovar_dyn_ant_sa) +
+  scale_x_continuous(name = "Length of Exposure to Moratorium Lift")
+
+ant_sa_att <- tibble(model = "Anticipation & Seasonal Adjustment",
+       ATT = attgt_nocovar_dyn_ant_sa$overall.att, 
+       se = attgt_nocovar_dyn_ant_sa$overall.se, 
+       conf_min = ATT - (se*1.96), 
+       conf_max = ATT + (se*1.96),
+       p_val = " ")
+```
+
+
+
+### Final ATT Table
+```{r}
+gt(bind_rows(base_att, ant_att, ant_sa_att)) %>%  
+   cols_label(model = "Model",
+              se = "Std. Error",
+              conf_min = "[95% Conf.",
+              conf_max = "Interval]",
+              p_val = "Significance") %>% 
+  fmt_number(decimals = 3) %>%
+  gtsave("/Users/cpreeldumas/Desktop/SPRING 2024/Capstone/att_table.png")
+
+```
+
