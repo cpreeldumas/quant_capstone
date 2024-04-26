@@ -34,11 +34,9 @@ library(stargazer)
 library(sjPlot)
 
 #import data
-bls_data <- read_csv("/Users/cpreeldumas/Documents/GitHub/quant_capstone/data_clean/data_v4.csv") %>% 
-  clean_names("snake") %>% #convert column names to snake case
-  rename(state_fips = state_fips_x,
-         county_fips = county_fips_x,
-         state = state_x) 
+bls_data <- read_csv("/Users/cpreeldumas/Documents/GitHub/quant_capstone/data_clean/data_v5.csv") %>% 
+  clean_names("snake") #convert column names to snake case
+
 
 glimpse(bls_data)
 ```
@@ -69,7 +67,7 @@ miss_var_summary(bls_data)
 #why are these state missing state_start? 
 bls_data %>% 
   filter(is.na(state_start)) %>% 
-  group_by(state) %>% 
+  group_by(state_y) %>% 
   tally()
 
 bls_data %>% arrange(desc(date))
@@ -90,7 +88,7 @@ bls_data_did <- bls_data %>%
     .fns = ~ as.numeric(as.yearmon(.x)),
     .names = "{.col}_new_year_mo")) %>% 
   mutate(first_treat = case_when(
-    state == "MA" ~ 0, #never-treated group
+    state_y == "MA" ~ 0, #never-treated group
     treatment == 1 ~ federal_end_new_year_mo,
     treatment == 0 ~ state_end_new_year_mo))  
 #option to round all numeric covariates in our model (could help multicollinearity)
@@ -112,7 +110,7 @@ bls_data_did <- bls_data %>%
 
 #dropping all NAs for now
 bls_data_did_nodc <- bls_data_did %>% 
-  filter(state != "DC" & state != "PR" & county != "Bailey County, Texas" & state != "HI")
+  filter(state_y != "DC" & state_y != "PR" & county != "Bailey County, Texas" & state_y != "HI")
 
 #bls_data_did_nodc %>% filter(is.na(unemployment_rate_s))
 
@@ -340,7 +338,7 @@ stargazer(pre_test, type="html",  out="/Users/cpreeldumas/Desktop/SPRING 2024/Ca
 ```
 
 #### Anticipation
-The decision to extend the eviction moratorium to July 31, 2021, was announced by the Centers for Disease Control and Prevention (CDC) on June 24, 2021. This extension was described as the final extension, aimed at providing additional support for tenants struggling to pay rent due to the pandemic. The context of this decision includes a backdrop of intense pressure from Congressional Democrats, leading to another extension through October 3, 2021, for counties with substantial and high levels of community transmission of the coronavirus. However, this later extension was struck down by the U.S. Supreme Court on August 26, 2021, effectively ending the federal eviction moratorium​
+The decision to extend the eviction moratorium to July 31, 2021, was announced by the Centers for Disease Control and Prevention (CDC) on June 24, 2021. This extension was described as the final extension, aimed at providing additional support for tenants struggling to pay rent due to the pandemic. The context of this decision includes a backdrop of intense pressure from Congressional Democrats, leading to another extension through October 3, 2021, for counties with substantial and high levels of community transmission of the coronavirus. However, this later extension was struck down by the U.S. Supreme Court on August 26, 2021, effectively ending the federal eviction moratorium
 
 Federal eviction moratorium ended on August 26, 2021
 Anticipation could start on June 24, 2021
@@ -356,8 +354,16 @@ bls_data_did_nodc %>% group_by(date, new_year_mo) %>% tally()
 
 
 #### Group-time average treatment effects
+
+Different outcome choices: 
+
+unemployment_rate: raw unadjusted data
+unemployment_rate_sa_auto:outlier detection set at auto (which we've already tried out in model)
+unemployment_rate_sa_5: outlier detection increased to 5 (max)
+unemployment_rate_sa_4: outlier detection increased to 4 
+
 ```{r}
-attgt_nocovar <- att_gt(yname = "unemployment_rate_s",
+attgt_nocovar <- att_gt(yname = "unemployment_rate",
                    gname = "first_treat",
                    idname = "idname",
                    tname = "new_year_mo",
@@ -368,9 +374,9 @@ attgt_nocovar <- att_gt(yname = "unemployment_rate_s",
                      bachelors_percentage +
                      black_or_african_american_percentage + 
                      hispanic_or_latino_percentage +
-                     laborforce_16over 
+                     laborforce_16over +
                      
-                     #popul_density
+                     popul_density
                      
                      #health_spending  
                      #housing_spending  
