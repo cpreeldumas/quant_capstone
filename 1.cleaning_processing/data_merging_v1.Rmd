@@ -63,7 +63,6 @@ BLS_data <- read_csv("~/Documents/Coding Projects/quant_capstone/data_raw/BLS_co
 ```{r}
 BLS_seas <- read_csv("~/Documents/Coding Projects/quant_capstone/data_raw/BLS_seas_v3.csv") %>%
   mutate(date = format(date, '%Y-%m')) %>%
-  separate(FIPS, into = c("state_fips", "county_fips"), -3) %>%
   filter(date >= "2020-07") 
 
 ```
@@ -85,7 +84,9 @@ data4 <- left_join(data3, covariates_census,  by = c("county"))
 ```{r}
 
 data5 <- data4 %>%
-  select(-20, -30, -34, -35)
+  select(-6, -8, -9, -33, -37, -38) %>%
+  rename(state_fips=state_fips.x) %>%
+  rename(county_fips=county_fips.x)
 
 
 summary(data5)
@@ -95,7 +96,7 @@ summary(data5)
 
 ```{r}
 
-write.csv(data5, "~/Documents/Coding Projects/quant_capstone/data_clean/data_v4.csv", row.names=FALSE)
+write.csv(data5, "~/Documents/Coding Projects/quant_capstone/data_clean/data_v5.csv", row.names=FALSE)
 
 ```
 
