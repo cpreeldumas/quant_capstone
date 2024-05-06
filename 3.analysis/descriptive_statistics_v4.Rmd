@@ -76,8 +76,8 @@ data_mean <- data_ds %>%
   rename("States"=states,
          "Counties"=counties,
          "Labor Force"=laborforce,
-         "Unemployment Rate - Raw"=unemployment_rate_raw,
-         "Unemployment Rate - Seasonally Adjusted"=unemployment_rate_sa,
+         "Unemployment Rate"=unemployment_rate_raw,
+         "Deseasonalized Unemployment Rate"=unemployment_rate_sa,
          "Share Renters"=pct_renters,
          "Share Black"=pct_black,
          "Share Hispanic"=pct_hispanic,
@@ -115,8 +115,8 @@ data_sd <- data_ds %>%
   rename("States"=states,
          "Counties"=counties,
          "Labor Force"=laborforce,
-         "Unemployment Rate - Raw"=unemployment_rate_raw,
-         "Unemployment Rate - Seasonally Adjusted"=unemployment_rate_sa,
+         "Unemployment Rate"=unemployment_rate_raw,
+         "Deseasonalized Unemployment Rate"=unemployment_rate_sa,
          "Share Renters"=pct_renters,
          "Share Black"=pct_black,
          "Share Hispanic"=pct_hispanic,
@@ -139,103 +139,13 @@ data_sd <- data_ds %>%
 
 ```
 
-
-## Prep Data // Post-period: August 2021 to April 2023
-
-
-```{r}
-
-data_post <- data_ds %>%
-  filter(date>"2021-07") %>%
-  group_by(treatment) %>%
-  summarize(states=length(unique(state_fips)),
-            counties=length(unique(county)),
-            laborforce=sum(laborforce_16over[date=="2021-08"]),
-            unemployment_rate_raw=mean(unemployment_rate, na.rm=TRUE),
-            unemployment_rate_sa=mean(unemployment_rate_sa_5, na.rm=TRUE),
-            avg_health_spending=mean(health_spending)*100,
-            avg_housing_spending=mean(housing_spending)*100,
-            avg_welfare_spending=mean(welfare_spending)*100,
-            pct_renters=mean(renters_occupied_percentage),
-            pct_black=mean(black_or_african_american_percentage),
-            pct_hispanic=mean(hispanic_or_latino_percentage),
-            pct_bachelors=mean(bachelors_percentage),
-            avg_median_age=mean(median_age),
-            avg_median_income=mean(median_income, na.rm=TRUE),
-            covid_cases=mean(monthly_covid_rate)
-            ) %>%
-    rename("States"=states,
-         "Counties"=counties,
-         "Labor Force"=laborforce,
-         "Unemployment Rate - Raw"=unemployment_rate_raw,
-         "Unemployment Rate - Seasonally Adjusted"=unemployment_rate_sa,
-         "Share Renters"=pct_renters,
-         "Share Black"=pct_black,
-         "Share Hispanic"=pct_hispanic,
-         "Share College Degree"=pct_bachelors,
-         "Median Age"=avg_median_age,
-         "Median Household Income"=avg_median_income,
-         "Health Spending"=avg_health_spending,
-         "Housing Spending"=avg_housing_spending,
-         "Welfare Spending"=avg_welfare_spending,
-         "COVID-19 Incidence"=covid_cases
-         ) %>%
-  select(-"treatment") %>%
-  rotate_df() %>%
-  rename(control_post=V1, treatment_post=V2)
-
-
-data_post_sd <- data_ds %>%
-  filter(date>"2021-07") %>%
-  group_by(treatment) %>%
-  summarize(states=print(0),
-            counties=print(0),
-            laborforce=print(0),
-            unemployment_rate_raw=sd(unemployment_rate, na.rm=TRUE),
-            unemployment_rate_sa=sd(unemployment_rate_sa_5, na.rm=TRUE),
-            avg_health_spending=sd(health_spending, na.rm=TRUE)*100,
-            avg_housing_spending=sd(housing_spending, na.rm=TRUE)*100,
-            avg_welfare_spending=sd(welfare_spending, na.rm=TRUE)*100,
-            pct_renters=sd(renters_occupied_percentage, na.rm=TRUE),
-            pct_black=sd(black_or_african_american_percentage, na.rm=TRUE),
-            pct_hispanic=sd(hispanic_or_latino_percentage, na.rm=TRUE),
-            pct_bachelors=sd(bachelors_percentage, na.rm=TRUE),
-            avg_median_age=sd(median_age, na.rm=TRUE),
-            avg_median_income=sd(median_income, na.rm=TRUE),
-            covid_cases=sd(monthly_covid_rate, na.rm=TRUE)
-            ) %>%
-  rename("States"=states,
-         "Counties"=counties,
-         "Labor Force"=laborforce,
-         "Unemployment Rate - Raw"=unemployment_rate_raw,
-         "Unemployment Rate - Seasonally Adjusted"=unemployment_rate_sa,
-         "Share Renters"=pct_renters,
-         "Share Black"=pct_black,
-         "Share Hispanic"=pct_hispanic,
-         "Share College Degree"=pct_bachelors,
-         "Median Age"=avg_median_age,
-         "Median Household Income"=avg_median_income,
-         "Health Spending"=avg_health_spending,
-         "Housing Spending"=avg_housing_spending,
-         "Welfare Spending"=avg_welfare_spending,
-         "COVID-19 Incidence"=covid_cases
-         #"Portion Mask Mandate"=pct_maskmandate
-         ) %>%
-  select(-"treatment") %>%
-  rotate_df() %>%
-  rename(control_post_sd=V1, treatment_post_sd=V2)
-
-
-```
-
-
 ## Prep Data // Overall // Study Period: Oct 2020 - April 2023
 
 ```{r}
 
 data_overall <- data_ds %>%
-  summarize(unemployment_rate_raw=sd(unemployment_rate, na.rm=TRUE),
-            unemployment_rate_sa=sd(unemployment_rate_sa_5, na.rm=TRUE),
+  summarize(unemployment_rate_raw=mean(unemployment_rate, na.rm=TRUE),
+            unemployment_rate_sa=mean(unemployment_rate_sa_5, na.rm=TRUE),
             avg_health_spending=mean(health_spending)*100,
             avg_housing_spending=mean(housing_spending)*100,
             avg_welfare_spending=mean(welfare_spending)*100,
@@ -253,8 +163,8 @@ data_overall <- data_ds %>%
   rename("States"=states,
          "Counties"=counties,
          "Labor Force"=laborforce,
-         "Unemployment Rate - Raw"=unemployment_rate_raw,
-         "Unemployment Rate - Seasonally Adjusted"=unemployment_rate_sa,
+         "Unemployment Rate"=unemployment_rate_raw,
+         "Deseasonalized Unemployment Rate"=unemployment_rate_sa,
          "Share Renters"=pct_renters,
          "Share Black"=pct_black,
          "Share Hispanic"=pct_hispanic,
@@ -290,8 +200,8 @@ data_overall_sd <- data_ds %>%
   rename("States"=states,
          "Counties"=counties,
          "Labor Force"=laborforce,
-         "Unemployment Rate - Raw"=unemployment_rate_raw,
-         "Unemployment Rate - Seasonally Adjusted"=unemployment_rate_sa,
+         "Unemployment Rate"=unemployment_rate_raw,
+         "Deseasonalized Unemployment Rate"=unemployment_rate_sa,
          "Share Renters"=pct_renters,
          "Share Black"=pct_black,
          "Share Hispanic"=pct_hispanic,
@@ -350,7 +260,7 @@ data_tbl <-
 gt(data_ds_3, rownames_to_stub = TRUE) |>
   tab_header(
     title = html("Table 1.<br>Descriptive Statistics")
-    ) |>
+  ) |>
   cols_align(
     align = c("center"),
     columns = 2:7
@@ -452,8 +362,25 @@ gt(data_ds_3, rownames_to_stub = TRUE) |>
     locale = NULL
   ) |>
   fmt_number(
-    rows = c(10,12),
+    rows = c(10),
     decimals = 2,
+    n_sigfig = NULL,
+    drop_trailing_zeros = FALSE,
+    drop_trailing_dec_mark = TRUE,
+    use_seps = TRUE,
+    accounting = FALSE,
+    scale_by = 1,
+    suffixing = FALSE,
+    pattern = "{x}",
+    sep_mark = ",",
+    dec_mark = ".",
+    force_sign = FALSE,
+    system = c("intl", "ind"),
+    locale = NULL
+  ) |>
+    fmt_number(
+    rows = c(12),
+    decimals = 0,
     n_sigfig = NULL,
     drop_trailing_zeros = FALSE,
     drop_trailing_dec_mark = TRUE,
@@ -494,7 +421,7 @@ sub_values(
   replacement = "-",
   escape = TRUE
 ) |>
-gtsave("ds_table.png", expand = 10)
+  gtsave("ds_table.png", expand = 10)
 ```
 
 ## Example code
